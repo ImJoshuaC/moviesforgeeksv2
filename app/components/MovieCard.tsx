@@ -16,7 +16,7 @@ export default function MovieCard({ results }: MovieCardProps) {
         className="w-full h-auto"
       />
 
-      <p className="font-roboto-serif text-lg text-center mt-1 wrap-break-word leading-tight">
+      <p className="font-roboto-serif text-lg text-center mt-1 wrap-break-word leading-tight line-clamp-2">
         {results.title}
       </p>
     </div>
