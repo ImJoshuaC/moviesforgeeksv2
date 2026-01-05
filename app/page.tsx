@@ -1,8 +1,80 @@
+import MovieCarousel from "@/app/components/MovieCarousel";
+import ShowsCarousel from "@/app/components/ShowsCarousel";
+import { Movie } from "@/app/types/movie";
+import { Shows } from "@/app/types/shows";
+
+const API_KEY = process.env.API_KEY;
+
+/*async function fetchMovies(category: string): Promise<Movie[]> {
+  const res = await fetch(
+    `https://api.themoviedb.org/3/movie/${category}?api_key=${API_KEY}&language=en-US&page=1`
+  );
+  const data = await res.json();
+  return data.results;
+} */
+
+export default async function Home() {
+  const popularRes = await fetch(
+    `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=en-US&page=1`
+  );
+  const popularData = await popularRes.json();
+  const featuredMovies: Movie[] = popularData.results;
+
+  const tvRes = await fetch(
+    `https://api.themoviedb.org/3/tv/popular?api_key=${API_KEY}&language=en-US&page=1`
+  );
+  const tvData = await tvRes.json();
+  const featuredShows: Shows[] = tvData.results;
+
+  /*const featuredMovies = await fetchMovies("popular");
+  const topRatedMovies = await fetchMovies("top_rated");*/
+
+  return (
+    <>
+      <div className="w-full">
+        <div className="mx-5 md:mx-15 lg:mx-25 my-5">
+          <>
+            <div className="flex flex-row justify-between items-baseline">
+              <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
+                Featured Movies
+              </h1>
+              <a
+                href=""
+                className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
+              >
+                Show More
+              </a>
+            </div>
+            <hr />
+            <MovieCarousel results={featuredMovies} />
+          </>
+          <>
+            <div className="flex flex-row justify-between items-baseline">
+              <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
+                Featured TV Shows
+              </h1>
+              <a
+                href=""
+                className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
+              >
+                Show More
+              </a>
+            </div>
+            <hr />
+            <ShowsCarousel results={featuredShows} />
+          </>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* 
 import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-roboto dark:bg-black">
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
         <Image
           className="dark:invert"
@@ -63,3 +135,4 @@ export default function Home() {
     </div>
   );
 }
+*/
