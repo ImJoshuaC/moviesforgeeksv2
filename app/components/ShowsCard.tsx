@@ -16,7 +16,7 @@ export default function ShowsCard({ results }: ShowsCardProps) {
         className="w-full h-auto"
       />
 
-      <p className="font-roboto-serif text-lg text-center mt-1 wrap-break-word leading-tight">
+      <p className="font-roboto-serif text-lg text-center mt-1 wrap-break-word leading-tight line-clamp-2">
         {results.name}
       </p>
     </div>

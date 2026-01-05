@@ -1,21 +1,21 @@
-import { Movie } from "@/app/types/movie";
-import MovieCarousel from "@/app/components/MovieCarousel";
+import { Shows } from "@/app/types/shows";
+import ShowsCarousel from "@/app/components/ShowsCarousel";
 
 const API_KEY = process.env.API_KEY;
 
-async function fetchMovies(category: string): Promise<Movie[]> {
+async function fetchShows(category: string): Promise<Shows[]> {
   const res = await fetch(
-    `https://api.themoviedb.org/3/movie/${category}?api_key=${API_KEY}&language=en-US&page=1`
+    `https://api.themoviedb.org/3/tv/${category}?api_key=${API_KEY}&language=en-US&page=1`
   );
   const data = await res.json();
   return data.results;
 }
 
-export default async function FilmsPage() {
-  const featuredMovies = await fetchMovies("popular");
-  const topRatedMovies = await fetchMovies("top_rated");
-  const upcomingMovies = await fetchMovies("upcoming");
-  const nowPlayingMovies = await fetchMovies("now_playing");
+export default async function ShowsPage() {
+  const featuredShows = await fetchShows("popular");
+  const topRatedShows = await fetchShows("top_rated");
+  const airingShows = await fetchShows("airing_today");
+  const onTheAirShows = await fetchShows("on_the_air");
 
   return (
     <>
@@ -24,7 +24,7 @@ export default async function FilmsPage() {
           <>
             <div className="flex flex-row justify-between items-baseline">
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
-                Trending Movies
+                Trending Shows
               </h1>
               <a
                 href=""
@@ -34,14 +34,14 @@ export default async function FilmsPage() {
               </a>
             </div>
             <hr />
-            <MovieCarousel results={featuredMovies} />
+            <ShowsCarousel results={featuredShows} />
           </>
         </div>
         <div className="mx-5 md:mx-15 lg:mx-25 my-5">
           <>
             <div className="flex flex-row justify-between items-baseline">
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
-                Now Playing
+                Airing Today
               </h1>
               <a
                 href=""
@@ -51,14 +51,14 @@ export default async function FilmsPage() {
               </a>
             </div>
             <hr />
-            <MovieCarousel results={nowPlayingMovies} />
+            <ShowsCarousel results={airingShows} />
           </>
         </div>
         <div className="mx-5 md:mx-15 lg:mx-25 my-5">
           <>
             <div className="flex flex-row justify-between items-baseline">
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
-                Top Rated Movies
+                On The Air
               </h1>
               <a
                 href=""
@@ -68,14 +68,14 @@ export default async function FilmsPage() {
               </a>
             </div>
             <hr />
-            <MovieCarousel results={topRatedMovies} />
+            <ShowsCarousel results={onTheAirShows} />
           </>
         </div>
         <div className="mx-5 md:mx-15 lg:mx-25 my-5">
           <>
             <div className="flex flex-row justify-between items-baseline">
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
-                Upcoming Movies
+                Top Rated Shows
               </h1>
               <a
                 href=""
@@ -85,7 +85,7 @@ export default async function FilmsPage() {
               </a>
             </div>
             <hr />
-            <MovieCarousel results={upcomingMovies} />
+            <ShowsCarousel results={topRatedShows} />
           </>
         </div>
       </div>
