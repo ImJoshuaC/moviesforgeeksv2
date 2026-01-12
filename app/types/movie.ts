@@ -1,5 +1,5 @@
 type Movie = {
-  id: number;
+  id: string;
   title: string;
   poster_path: string;
   backdrop_path: string;
