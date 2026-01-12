@@ -47,7 +47,7 @@ export default function ShowsCarousel({ results }: ShowsCarouselProps) {
     dots: false,
     infinite: true,
     speed: 600,
-    slidesToShow: 7,
+    slidesToShow: 1,
     slidesToScroll: 1,
     arrows: true,
     initialSlide: 0,
@@ -57,12 +57,14 @@ export default function ShowsCarousel({ results }: ShowsCarouselProps) {
     swipeToSlide: true,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
+    mobileFirst: true,
     responsive: [
-      { breakpoint: 1440, settings: { slidesToShow: 8, slidesToScroll: 1 } },
+      { breakpoint: 2560, settings: { slidesToShow: 12, slidesToScroll: 1 } },
+      { breakpoint: 1440, settings: { slidesToShow: 7, slidesToScroll: 1 } },
       { breakpoint: 1280, settings: { slidesToShow: 6, slidesToScroll: 1 } },
       { breakpoint: 1024, settings: { slidesToShow: 5, slidesToScroll: 1 } },
-      { breakpoint: 820, settings: { slidesToShow: 4, slidesToScroll: 1 } },
-      { breakpoint: 480, settings: { slidesToShow: 2, slidesToScroll: 1 } },
+      { breakpoint: 820, settings: { slidesToShow: 3, slidesToScroll: 1 } },
+      { breakpoint: 480, settings: { slidesToShow: 1, slidesToScroll: 1 } },
     ],
   };
 
