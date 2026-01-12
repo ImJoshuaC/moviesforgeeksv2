@@ -8,7 +8,7 @@ type MovieCarouselProps = {
 export default function MovieCarousel({ results }: MovieCarouselProps) {
   return (
     <div className="flex flex-col items-center lg:flex-row lg:items-start lg:justify-center lg:gap-6">
-      {results.slice(0, 7).map((movie) => (
+      {results.slice(0, 8).map((movie) => (
         <MovieCard key={movie.id} results={movie} />
       ))}
     </div>
