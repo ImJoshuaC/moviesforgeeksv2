@@ -1,10 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Spin as Hamburger } from "hamburger-react";
 
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
 
   return (
     <nav className="w-full h-auto text-white bg-[#161616]">
@@ -20,6 +29,9 @@ export const Navbar = () => {
               <input
                 type="text"
                 placeholder="Search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleSearch}
                 className="
                 w-full
                 bg-transparent
@@ -54,6 +66,9 @@ export const Navbar = () => {
             <input
               type="text"
               placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleSearch}
               className="
                 w-full
                 bg-transparent
