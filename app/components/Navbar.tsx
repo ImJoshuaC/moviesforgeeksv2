@@ -43,7 +43,9 @@ export const Navbar = () => {
       </div>
       {/*Desktop Device */}
       <div className="hidden lg:flex items-center justify-between h-full px-8 py-6">
-        <h1 className="text-3xl font-jaro">MoviesForGeeks</h1>
+        <h1 className="text-3xl font-jaro">
+          <a href="..">MoviesForGeeks</a>
+        </h1>
         <div className="flex gap-6 font-roboto-slab text-lg">
           <a href="../films/">FILMS</a>
           <a href="../shows/">TV SHOWS</a>

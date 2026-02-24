@@ -9,7 +9,7 @@ type ShowsCardProps = {
 export default function ShowsCard({ results }: ShowsCardProps) {
   return (
     <Link href={`/shows/${results.id}`}>
-      <div className="flex flex-col items-center mt-3 w-37.5">
+      <div className="flex flex-col items-center mt-3 mb-2 w-full transform transition-transform duration-300 hover:scale-105">
         <Image
           src={`https://image.tmdb.org/t/p/w500${results.poster_path}`}
           alt={results.name ?? "Movie Poster"}

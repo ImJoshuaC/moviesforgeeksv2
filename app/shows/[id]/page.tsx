@@ -31,21 +31,20 @@ export default async function SpecificShowsPage({
         quality={90}
         sizes="100vw"
       />
-      {/* Overlay for dimming if needed */}
-      <div className="absolute inset-0 bg-black/50 z-10"></div>
+      {/* Gradient overlay — darkens toward bottom for readability */}
+      <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/60 to-black/90 z-10" />
       {/* Content goes on top of backdrop but below navbar */}
       <div className="relative z-20 p-4 md:p-6 lg:p-8">
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row gap-6 md:gap-8 lg:gap-10">
             {/* Poster Image */}
-            <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
+            <div className="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0">
               <Image
                 src={`https://image.tmdb.org/t/p/w500${showData.poster_path}`}
                 alt={showData.name ?? "Show Poster"}
-                width={50}
-                height={75}
+                width={300}
+                height={450}
                 quality={90}
-                sizes="100vw"
                 className="w-full h-auto rounded-lg shadow-2xl"
               />
             </div>
@@ -105,12 +104,12 @@ export default async function SpecificShowsPage({
               </div>
             </div>
           </div>
-          <>
-            <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
+          <div className="mt-10">
+            <h2 className="text-white font-roboto-slab text-xl md:text-2xl uppercase [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">
               Cast
-            </h1>
-            <hr></hr>
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            </h2>
+            <hr className="border-white/30 my-3" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {creditsData.cast
                 ?.filter(
                   (member: any) =>
@@ -149,7 +148,7 @@ export default async function SpecificShowsPage({
                   </div>
                 ))}
             </div>
-          </>
+          </div>
         </div>
       </div>
     </div>
