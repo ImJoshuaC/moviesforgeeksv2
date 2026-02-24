@@ -1,4 +1,5 @@
 import Image from "next/image";
+import CastCarousel from "@/app/components/CastCarousel";
 
 const API_KEY = process.env.API_KEY;
 
@@ -10,12 +11,12 @@ export default async function SpecificShowsPage({
   const showId = (await params).id;
 
   const res = await fetch(
-    `https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`
+    `https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`,
   );
   const showData = await res.json();
 
   const creditsRes = await fetch(
-    `https://api.themoviedb.org/3/tv/${showId}/credits?api_key=${API_KEY}&language=en-US`
+    `https://api.themoviedb.org/3/tv/${showId}/credits?api_key=${API_KEY}&language=en-US`,
   );
   const creditsData = await creditsRes.json();
 
@@ -61,8 +62,8 @@ export default async function SpecificShowsPage({
                     showData.vote_average >= 6.5
                       ? "bg-green-600"
                       : showData.vote_average >= 5.0
-                      ? "bg-yellow-500"
-                      : "bg-red-600"
+                        ? "bg-yellow-500"
+                        : "bg-red-600"
                   }`}
                 >
                   <p
@@ -108,46 +109,14 @@ export default async function SpecificShowsPage({
             <h2 className="text-white font-roboto-slab text-xl md:text-2xl uppercase [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">
               Cast
             </h2>
-            <hr className="border-white/30 my-3" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {creditsData.cast
-                ?.filter(
-                  (member: any) =>
-                    member &&
-                    member.character &&
-                    member.character.trim().length > 0
-                )
-                .map((member: any) => (
-                  <div
-                    key={member.cast_id ?? `${member.id}-${member.credit_id}`}
-                    className="flex flex-col items-center text-center gap-2 bg-black/30 p-3 rounded-lg"
-                  >
-                    <div className="w-24 h-24 relative overflow-hidden rounded-full bg-black/40">
-                      {member.profile_path ? (
-                        <Image
-                          src={`https://image.tmdb.org/t/p/w185${member.profile_path}`}
-                          alt={member.name ?? "Cast member"}
-                          fill
-                          sizes="96px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white text-xs">
-                          No Image
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <p className="text-white font-roboto-slab text-sm md:text-base">
-                        {member.name}
-                      </p>
-                      <p className="text-white/80 font-roboto-serif text-xs md:text-sm">
-                        {member.character}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-            </div>
+            <hr className="border-white/30 my-1" />
+            <CastCarousel
+              cast={
+                creditsData.cast?.filter(
+                  (m: any) => m?.character?.trim().length > 0,
+                ) ?? []
+              }
+            />
           </div>
         </div>
       </div>
