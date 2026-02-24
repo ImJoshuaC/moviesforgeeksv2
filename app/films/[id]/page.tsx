@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const API_KEY = process.env.API_KEY;
 
 export default async function SpecificFilmPage({
@@ -7,16 +9,161 @@ export default async function SpecificFilmPage({
 }) {
   const filmId = (await params).id;
 
-  const res = await fetch(
-    `https://api.themoviedb.org/3/movie/${filmId}?api_key=${API_KEY}&language=en-US`
-  );
+  const [res, creditsRes] = await Promise.all([
+    fetch(
+      `https://api.themoviedb.org/3/movie/${filmId}?api_key=${API_KEY}&language=en-US`
+    ),
+    fetch(
+      `https://api.themoviedb.org/3/movie/${filmId}/credits?api_key=${API_KEY}&language=en-US`
+    ),
+  ]);
+
   const filmData = await res.json();
-  console.log(filmData);
+  const creditsData = await creditsRes.json();
+
+  const hours = Math.floor(filmData.runtime / 60);
+  const minutes = filmData.runtime % 60;
+  const runtime = filmData.runtime
+    ? `${hours}h ${minutes}m`
+    : null;
 
   return (
-    <div>
-      <h1>{filmData.title}</h1>
-      <p>{filmData.overview}</p>
+    <div className="relative w-full min-h-screen">
+      {/* Backdrop Image */}
+      <Image
+        src={`https://image.tmdb.org/t/p/w1280${filmData.backdrop_path}`}
+        alt={filmData.title ?? "Film Backdrop"}
+        fill
+        priority
+        className="object-cover z-0"
+        quality={90}
+        sizes="100vw"
+      />
+      {/* Gradient overlay — darkens toward bottom for readability */}
+      <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/60 to-black/90 z-10" />
+
+      {/* Content */}
+      <div className="relative z-20 p-4 md:p-6 lg:p-8">
+        <div className="w-full max-w-7xl mx-auto">
+          {/* Hero row: poster left, info right */}
+          <div className="flex flex-col md:flex-row gap-6 md:gap-8 lg:gap-10">
+            {/* Poster */}
+            <div className="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0">
+              <Image
+                src={`https://image.tmdb.org/t/p/w500${filmData.poster_path}`}
+                alt={filmData.title ?? "Film Poster"}
+                width={300}
+                height={450}
+                quality={90}
+                className="w-full h-auto rounded-lg shadow-2xl"
+              />
+            </div>
+
+            {/* Info */}
+            <div className="flex flex-col gap-4 md:gap-5 lg:gap-6 flex-1">
+              {/* Title and Rating */}
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-roboto-slab font-black uppercase [text-shadow:_2px_2px_4px_rgb(0_0_0_/_80%)]">
+                  {filmData.title}
+                </h1>
+                <div
+                  className={`rounded-full px-3 py-1.5 flex items-center justify-center min-w-[50px] ${
+                    filmData.vote_average >= 6.5
+                      ? "bg-green-600"
+                      : filmData.vote_average >= 5.0
+                      ? "bg-yellow-500"
+                      : "bg-red-600"
+                  }`}
+                >
+                  <p className="text-white text-base md:text-lg font-roboto-slab font-bold [text-shadow:_-1px_-1px_0_rgb(0_0_0_/_80%),_1px_-1px_0_rgb(0_0_0_/_80%),_-1px_1px_0_rgb(0_0_0_/_80%),_1px_1px_0_rgb(0_0_0_/_80%)]">
+                    {filmData.vote_average?.toFixed(1)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {filmData.release_date && (
+                  <p className="text-white/90 text-sm md:text-base font-roboto-serif">
+                    <span className="font-bold">Release Date:</span>{" "}
+                    {filmData.release_date}
+                  </p>
+                )}
+                {runtime && (
+                  <p className="text-white/90 text-sm md:text-base font-roboto-serif">
+                    <span className="font-bold">Runtime:</span> {runtime}
+                  </p>
+                )}
+                {filmData.genres?.length > 0 && (
+                  <p className="text-white/90 text-sm md:text-base font-roboto-serif">
+                    <span className="font-bold">Genre:</span>{" "}
+                    {filmData.genres
+                      .map((g: { id: number; name: string }) => g.name)
+                      .join(", ")}
+                  </p>
+                )}
+              </div>
+
+              {/* Synopsis */}
+              <div className="mt-2">
+                <h2 className="text-white text-lg md:text-xl lg:text-2xl font-roboto-slab font-bold mb-2 md:mb-3 [text-shadow:_1px_1px_2px_rgb(0_0_0_/_80%)]">
+                  Synopsis
+                </h2>
+                <p className="text-white text-sm md:text-base lg:text-lg font-roboto-serif leading-relaxed [text-shadow:_1px_1px_2px_rgb(0_0_0_/_80%)]">
+                  {filmData.overview || "No synopsis available."}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Cast Section */}
+          <div className="mt-10">
+            <h2 className="text-white font-roboto-slab text-xl md:text-2xl uppercase [text-shadow:_1px_1px_2px_rgb(0_0_0_/_80%)]">
+              Cast
+            </h2>
+            <hr className="border-white/30 my-3" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {creditsData.cast
+                ?.filter(
+                  (member: any) =>
+                    member &&
+                    member.character &&
+                    member.character.trim().length > 0
+                )
+                .map((member: any) => (
+                  <div
+                    key={member.cast_id ?? `${member.id}-${member.credit_id}`}
+                    className="flex flex-col items-center text-center gap-2 bg-black/30 p-3 rounded-lg"
+                  >
+                    <div className="w-24 h-24 relative overflow-hidden rounded-full bg-black/40">
+                      {member.profile_path ? (
+                        <Image
+                          src={`https://image.tmdb.org/t/p/w185${member.profile_path}`}
+                          alt={member.name ?? "Cast member"}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white text-xs">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-white font-roboto-slab text-sm md:text-base">
+                        {member.name}
+                      </p>
+                      <p className="text-white/80 font-roboto-serif text-xs md:text-sm">
+                        {member.character}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
