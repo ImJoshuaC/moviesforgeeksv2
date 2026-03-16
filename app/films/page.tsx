@@ -19,7 +19,7 @@ export default async function FilmsPage() {
 
   return (
     <>
-      <div className="w-full">
+      <div className="w-full bg-[#1c1c1c]">
         <div className="mx-5 md:mx-15 lg:mx-25 my-5">
           <>
             <div className="flex flex-row justify-between items-baseline">
