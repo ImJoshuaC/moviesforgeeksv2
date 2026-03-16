@@ -1,5 +1,10 @@
 import Image from "next/image";
 import CastCarousel from "@/app/components/CastCarousel";
+import WatchlistButton from "@/app/components/WatchlistButton";
+import ReviewSection from "@/app/components/ReviewSection";
+import { isInWatchlist } from "@/app/actions/watchlist";
+import { getReviews, getUserReview } from "@/app/actions/reviews";
+import { createClient } from "@/lib/supabase/server";
 
 const API_KEY = process.env.API_KEY;
 
@@ -10,15 +15,21 @@ export default async function SpecificShowsPage({
 }) {
   const showId = (await params).id;
 
-  const res = await fetch(
-    `https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`,
-  );
+  const [res, creditsRes] = await Promise.all([
+    fetch(`https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`),
+    fetch(`https://api.themoviedb.org/3/tv/${showId}/credits?api_key=${API_KEY}&language=en-US`),
+  ]);
   const showData = await res.json();
-
-  const creditsRes = await fetch(
-    `https://api.themoviedb.org/3/tv/${showId}/credits?api_key=${API_KEY}&language=en-US`,
-  );
   const creditsData = await creditsRes.json();
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const [inWatchlist, reviews, userReview] = await Promise.all([
+    isInWatchlist(Number(showId), "show"),
+    getReviews(Number(showId), "show"),
+    getUserReview(Number(showId), "show"),
+  ]);
 
   return (
     <div className="relative w-full min-h-screen">
@@ -90,7 +101,7 @@ export default async function SpecificShowsPage({
                 </p>
                 <p className="text-white text-sm md:text-base font-roboto-serif">
                   <span className="font-bold">Genre:</span>{" "}
-                  {showData.genres.map((genres: any) => genres.name).join(", ")}
+                  {showData.genres.map((g: { id: number; name: string }) => g.name).join(", ")}
                 </p>
               </div>
 
@@ -103,6 +114,15 @@ export default async function SpecificShowsPage({
                   {showData.overview || "No synopsis available."}
                 </p>
               </div>
+
+              <WatchlistButton
+                mediaId={Number(showId)}
+                mediaType="show"
+                title={showData.name}
+                posterPath={showData.poster_path}
+                initialIsInWatchlist={inWatchlist}
+                isLoggedIn={!!user}
+              />
             </div>
           </div>
           <div className="mt-10">
@@ -113,11 +133,19 @@ export default async function SpecificShowsPage({
             <CastCarousel
               cast={
                 creditsData.cast?.filter(
-                  (m: any) => m?.character?.trim().length > 0,
+                  (m: { character?: string }) => (m?.character?.trim().length ?? 0) > 0,
                 ) ?? []
               }
             />
           </div>
+
+          <ReviewSection
+            mediaId={Number(showId)}
+            mediaType="show"
+            initialReviews={reviews}
+            userReview={userReview}
+            isLoggedIn={!!user}
+          />
         </div>
       </div>
     </div>

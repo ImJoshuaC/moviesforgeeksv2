@@ -1,5 +1,10 @@
 import Image from "next/image";
 import CastCarousel from "@/app/components/CastCarousel";
+import WatchlistButton from "@/app/components/WatchlistButton";
+import ReviewSection from "@/app/components/ReviewSection";
+import { isInWatchlist } from "@/app/actions/watchlist";
+import { getReviews, getUserReview } from "@/app/actions/reviews";
+import { createClient } from "@/lib/supabase/server";
 
 const API_KEY = process.env.API_KEY;
 
@@ -21,6 +26,15 @@ export default async function SpecificFilmPage({
 
   const filmData = await res.json();
   const creditsData = await creditsRes.json();
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const [inWatchlist, reviews, userReview] = await Promise.all([
+    isInWatchlist(Number(filmId), "movie"),
+    getReviews(Number(filmId), "movie"),
+    getUserReview(Number(filmId), "movie"),
+  ]);
 
   const hours = Math.floor(filmData.runtime / 60);
   const minutes = filmData.runtime % 60;
@@ -112,6 +126,15 @@ export default async function SpecificFilmPage({
                   {filmData.overview || "No synopsis available."}
                 </p>
               </div>
+
+              <WatchlistButton
+                mediaId={Number(filmId)}
+                mediaType="movie"
+                title={filmData.title}
+                posterPath={filmData.poster_path}
+                initialIsInWatchlist={inWatchlist}
+                isLoggedIn={!!user}
+              />
             </div>
           </div>
 
@@ -124,11 +147,19 @@ export default async function SpecificFilmPage({
             <CastCarousel
               cast={
                 creditsData.cast?.filter(
-                  (m: any) => m?.character?.trim().length > 0,
+                  (m: { character?: string }) => m?.character?.trim().length > 0,
                 ) ?? []
               }
             />
           </div>
+
+          <ReviewSection
+            mediaId={Number(filmId)}
+            mediaType="movie"
+            initialReviews={reviews}
+            userReview={userReview}
+            isLoggedIn={!!user}
+          />
         </div>
       </div>
     </div>
