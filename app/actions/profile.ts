@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
 export async function getProfile() {
@@ -9,11 +10,9 @@ export async function getProfile() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  const profile = await prisma.profile.findUnique({
+    where: { id: user.id },
+  })
 
   return { user, profile }
 }
@@ -28,15 +27,24 @@ export async function updateProfile(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
-  const { error } = await supabase.from('profiles').upsert({
-    id: user.id,
-    username: username || null,
-    bio: bio || null,
-    avatar_url: avatarUrl || null,
-    updated_at: new Date().toISOString(),
-  })
-
-  if (error) return { error: error.message }
+  try {
+    await prisma.profile.upsert({
+      where: { id: user.id },
+      update: {
+        username: username || null,
+        bio: bio || null,
+        avatar_url: avatarUrl || null,
+      },
+      create: {
+        id: user.id,
+        username: username || null,
+        bio: bio || null,
+        avatar_url: avatarUrl || null,
+      },
+    })
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' }
+  }
 
   revalidatePath('/profile')
   return { success: true }

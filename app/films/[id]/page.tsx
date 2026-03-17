@@ -147,7 +147,7 @@ export default async function SpecificFilmPage({
             <CastCarousel
               cast={
                 creditsData.cast?.filter(
-                  (m: { character?: string }) => m?.character?.trim().length > 0,
+                  (m: { character?: string }) => (m?.character?.trim().length ?? 0) > 0,
                 ) ?? []
               }
             />

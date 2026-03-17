@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id         String      @id
+  username   String?
+  bio        String?
+  avatar_url String?
+  updated_at DateTime    @updatedAt
+
+  watchlist  Watchlist[]
+  reviews    Review[]
+
+  @@map("profiles")
+}
+
+model Watchlist {
+  id          String   @id @default(uuid())
+  user_id     String
+  media_id    Int
+  media_type  String
+  title       String
+  poster_path String?
+  created_at  DateTime @default(now())
+
+  profile     Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("watchlist")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  user_id    String
+  media_id   Int
+  media_type String
+  rating     Float
+  body       String?
+  created_at DateTime @default(now())
+
+  profile    Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, media_id, media_type])
+  @@map("reviews")
+}

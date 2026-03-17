@@ -64,7 +64,7 @@ export default async function Home() {
             <h2 className="font-roboto-slab text-xl md:text-2xl uppercase text-white">
               Trending Today
             </h2>
-            <Link href="/films" className="font-roboto-serif text-xs md:text-sm uppercase text-white/50 hover:text-white transition-colors">
+            <Link href="/films/category/trending" className="font-roboto-serif text-xs md:text-sm uppercase text-white/50 hover:text-white transition-colors">
               See All
             </Link>
           </div>
@@ -78,7 +78,7 @@ export default async function Home() {
             <h2 className="font-roboto-slab text-xl md:text-2xl uppercase text-white">
               Coming Soon
             </h2>
-            <Link href="/films" className="font-roboto-serif text-xs md:text-sm uppercase text-white/50 hover:text-white transition-colors">
+            <Link href="/films/category/coming-soon" className="font-roboto-serif text-xs md:text-sm uppercase text-white/50 hover:text-white transition-colors">
               See All
             </Link>
           </div>
@@ -92,7 +92,7 @@ export default async function Home() {
             <h2 className="font-roboto-slab text-xl md:text-2xl uppercase text-white">
               Popular TV Shows
             </h2>
-            <Link href="/shows" className="font-roboto-serif text-xs md:text-sm uppercase text-white/50 hover:text-white transition-colors">
+            <Link href="/shows/category/popular" className="font-roboto-serif text-xs md:text-sm uppercase text-white/50 hover:text-white transition-colors">
               See All
             </Link>
           </div>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Movie } from "@/app/types/movie";
 import MovieCarousel from "@/app/components/MovieCarousel";
 
@@ -26,12 +27,12 @@ export default async function FilmsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 Trending Movies
               </h1>
-              <a
-                href=""
+              <Link
+                href="/films/category/popular"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <MovieCarousel results={featuredMovies} />
@@ -43,12 +44,12 @@ export default async function FilmsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 Now Playing
               </h1>
-              <a
-                href=""
+              <Link
+                href="/films/category/now-playing"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <MovieCarousel results={nowPlayingMovies} />
@@ -60,12 +61,12 @@ export default async function FilmsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 Top Rated Movies
               </h1>
-              <a
-                href=""
+              <Link
+                href="/films/category/top-rated"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <MovieCarousel results={topRatedMovies} />
@@ -77,12 +78,12 @@ export default async function FilmsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 Upcoming Movies
               </h1>
-              <a
-                href=""
+              <Link
+                href="/films/category/coming-soon"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <MovieCarousel results={upcomingMovies} />

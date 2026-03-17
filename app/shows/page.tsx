@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Shows } from "@/app/types/shows";
 import ShowsCarousel from "@/app/components/ShowsCarousel";
 
@@ -26,12 +27,12 @@ export default async function ShowsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 Trending Shows
               </h1>
-              <a
-                href=""
+              <Link
+                href="/shows/category/popular"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <ShowsCarousel results={featuredShows} />
@@ -43,12 +44,12 @@ export default async function ShowsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 Airing Today
               </h1>
-              <a
-                href=""
+              <Link
+                href="/shows/category/airing-today"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <ShowsCarousel results={airingShows} />
@@ -60,12 +61,12 @@ export default async function ShowsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 On The Air
               </h1>
-              <a
-                href=""
+              <Link
+                href="/shows/category/on-the-air"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <ShowsCarousel results={onTheAirShows} />
@@ -77,12 +78,12 @@ export default async function ShowsPage() {
               <h1 className="font-roboto-slab text-xl md:text-2xl uppercase">
                 Top Rated Shows
               </h1>
-              <a
-                href=""
+              <Link
+                href="/shows/category/top-rated"
                 className="font-roboto-serif text-[12px] md:text-sm lg:text-[16px] uppercase"
               >
                 Show More
-              </a>
+              </Link>
             </div>
             <hr />
             <ShowsCarousel results={topRatedShows} />

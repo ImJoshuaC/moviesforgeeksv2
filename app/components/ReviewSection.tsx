@@ -8,7 +8,7 @@ type Review = {
   user_id: string;
   rating: number;
   body: string | null;
-  created_at: string;
+  created_at: Date | string;
 };
 
 type Props = {
@@ -49,7 +49,7 @@ export default function ReviewSection({
         user_id: "me",
         rating,
         body,
-        created_at: new Date().toISOString(),
+        created_at: new Date(),
       };
       setReviews((prev) => {
         const without = prev.filter((r) => r.id !== userReview?.id);

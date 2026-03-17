@@ -16,14 +16,20 @@ export default async function SpecificShowsPage({
   const showId = (await params).id;
 
   const [res, creditsRes] = await Promise.all([
-    fetch(`https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/tv/${showId}/credits?api_key=${API_KEY}&language=en-US`),
+    fetch(
+      `https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`,
+    ),
+    fetch(
+      `https://api.themoviedb.org/3/tv/${showId}/credits?api_key=${API_KEY}&language=en-US`,
+    ),
   ]);
   const showData = await res.json();
   const creditsData = await creditsRes.json();
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const [inWatchlist, reviews, userReview] = await Promise.all([
     isInWatchlist(Number(showId), "show"),
@@ -101,7 +107,9 @@ export default async function SpecificShowsPage({
                 </p>
                 <p className="text-white text-sm md:text-base font-roboto-serif">
                   <span className="font-bold">Genre:</span>{" "}
-                  {showData.genres.map((g: { id: number; name: string }) => g.name).join(", ")}
+                  {showData.genres
+                    .map((g: { id: number; name: string }) => g.name)
+                    .join(", ")}
                 </p>
               </div>
 
@@ -133,7 +141,8 @@ export default async function SpecificShowsPage({
             <CastCarousel
               cast={
                 creditsData.cast?.filter(
-                  (m: { character?: string }) => (m?.character?.trim().length ?? 0) > 0,
+                  (m: { character?: string }) =>
+                    (m?.character?.trim().length ?? 0) > 0,
                 ) ?? []
               }
             />

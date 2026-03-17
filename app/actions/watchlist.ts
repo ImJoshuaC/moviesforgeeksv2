@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
 export async function addToWatchlist(
@@ -14,15 +15,19 @@ export async function addToWatchlist(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
-  const { error } = await supabase.from('watchlist').insert({
-    user_id: user.id,
-    media_id: mediaId,
-    media_type: mediaType,
-    title,
-    poster_path: posterPath,
-  })
-
-  if (error) return { error: error.message }
+  try {
+    await prisma.watchlist.create({
+      data: {
+        user_id: user.id,
+        media_id: mediaId,
+        media_type: mediaType,
+        title,
+        poster_path: posterPath,
+      },
+    })
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' }
+  }
 
   revalidatePath(`/${mediaType === 'movie' ? 'films' : 'shows'}/${mediaId}`)
   return { success: true }
@@ -37,14 +42,17 @@ export async function removeFromWatchlist(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
-  const { error } = await supabase
-    .from('watchlist')
-    .delete()
-    .eq('user_id', user.id)
-    .eq('media_id', mediaId)
-    .eq('media_type', mediaType)
-
-  if (error) return { error: error.message }
+  try {
+    await prisma.watchlist.deleteMany({
+      where: {
+        user_id: user.id,
+        media_id: mediaId,
+        media_type: mediaType,
+      },
+    })
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' }
+  }
 
   revalidatePath(`/${mediaType === 'movie' ? 'films' : 'shows'}/${mediaId}`)
   return { success: true }
@@ -56,12 +64,10 @@ export async function getWatchlist() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { data } = await supabase
-    .from('watchlist')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  return data ?? []
+  return prisma.watchlist.findMany({
+    where: { user_id: user.id },
+    orderBy: { created_at: 'desc' },
+  })
 }
 
 export async function isInWatchlist(
@@ -73,13 +79,14 @@ export async function isInWatchlist(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
 
-  const { data } = await supabase
-    .from('watchlist')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('media_id', mediaId)
-    .eq('media_type', mediaType)
-    .single()
+  const item = await prisma.watchlist.findFirst({
+    where: {
+      user_id: user.id,
+      media_id: mediaId,
+      media_type: mediaType,
+    },
+    select: { id: true },
+  })
 
-  return !!data
+  return !!item
 }

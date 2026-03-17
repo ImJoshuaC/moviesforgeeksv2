@@ -11,8 +11,8 @@ export default function ShowsCard({ results }: ShowsCardProps) {
     <Link href={`/shows/${results.id}`}>
       <div className="flex flex-col items-center mt-3 mb-2 w-full transform transition-transform duration-300 hover:scale-105">
         <Image
-          src={`https://image.tmdb.org/t/p/w500${results.poster_path}`}
-          alt={results.name ?? "Movie Poster"}
+          src={results.poster_path ? `https://image.tmdb.org/t/p/w500${results.poster_path}` : "/poster-placeholder.svg"}
+          alt={results.name ?? "Show Poster"}
           width={300}
           height={450}
           className="w-full h-auto rounded-lg"
