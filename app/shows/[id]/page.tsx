@@ -50,7 +50,7 @@ export default async function SpecificShowsPage({
         sizes="100vw"
       />
       {/* Gradient overlay — darkens toward bottom for readability */}
-      <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/60 to-black/90 z-10" />
+      <div className="absolute inset-0 bg-linear-to-b from-black/70 via-black/80 to-black/95 z-10" />
       {/* Content goes on top of backdrop but below navbar */}
       <div className="relative z-20 p-4 md:p-6 lg:p-8">
         <div className="w-full max-w-7xl mx-auto">

@@ -39,7 +39,7 @@ model Review {
   user_id    String
   media_id   Int
   media_type String
-  rating     Float
+  rating     Int
   body       String?
   created_at DateTime @default(now())
 
