@@ -42,10 +42,10 @@ model Review {
   media_type String
   rating     Int
   body       String?
-  created_at DateTime @default(now())
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
 
   profile    Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([user_id, media_id, media_type])
   @@map("reviews")
 }

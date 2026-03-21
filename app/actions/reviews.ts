@@ -15,23 +15,42 @@ export async function submitReview(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not logged in' }
 
+  let review;
   try {
-    await prisma.review.upsert({
-      where: {
-        user_id_media_id_media_type: {
-          user_id: user.id,
-          media_id: mediaId,
-          media_type: mediaType,
-        },
-      },
-      update: { rating, body },
-      create: {
+    review = await prisma.review.create({
+      data: {
         user_id: user.id,
         media_id: mediaId,
         media_type: mediaType,
         rating,
         body,
       },
+      include: { profile: true },
+    })
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' }
+  }
+
+  revalidatePath(`/${mediaType === 'movie' ? 'films' : 'shows'}/${mediaId}`)
+  return { success: true, review }
+}
+
+export async function updateReview(
+  reviewId: string,
+  mediaId: number,
+  mediaType: 'movie' | 'show',
+  rating: number,
+  body: string
+) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  try {
+    await prisma.review.updateMany({
+      where: { id: reviewId, user_id: user.id },
+      data: { rating, body },
     })
   } catch (e: unknown) {
     return { error: e instanceof Error ? e.message : 'Unknown error' }
@@ -48,26 +67,7 @@ export async function getReviews(
   return prisma.review.findMany({
     where: { media_id: mediaId, media_type: mediaType },
     orderBy: { created_at: 'desc' },
-  })
-}
-
-export async function getUserReview(
-  mediaId: number,
-  mediaType: 'movie' | 'show'
-) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  return prisma.review.findUnique({
-    where: {
-      user_id_media_id_media_type: {
-        user_id: user.id,
-        media_id: mediaId,
-        media_type: mediaType,
-      },
-    },
+    include: { profile: true },
   })
 }
 
@@ -79,11 +79,7 @@ export async function deleteReview(reviewId: string, mediaId: number, mediaType:
 
   try {
     await prisma.review.deleteMany({
-      where: {
-        id: reviewId,
-
-        user_id: user.id,
-      },
+      where: { id: reviewId, user_id: user.id },
     })
   } catch (e: unknown) {
     return { error: e instanceof Error ? e.message : 'Unknown error' }
