@@ -79,19 +79,27 @@ export default async function SpecificFilmPage({
                 <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-roboto-slab font-black uppercase [text-shadow:_2px_2px_4px_rgb(0_0_0_/_80%)]">
                   {filmData.title}
                 </h1>
-                <div
-                  className={`rounded-full px-3 py-1.5 flex items-center justify-center min-w-[50px] ${
-                    filmData.vote_average >= 6.5
-                      ? "bg-green-600"
-                      : filmData.vote_average >= 5.0
-                        ? "bg-yellow-500"
-                        : "bg-red-600"
-                  }`}
-                >
-                  <p className="text-white text-base md:text-lg font-roboto-slab font-bold [text-shadow:_-1px_-1px_0_rgb(0_0_0_/_80%),_1px_-1px_0_rgb(0_0_0_/_80%),_-1px_1px_0_rgb(0_0_0_/_80%),_1px_1px_0_rgb(0_0_0_/_80%)]">
-                    {filmData.vote_average?.toFixed(1)}
-                  </p>
-                </div>
+                {filmData.vote_count > 0 ? (
+                  <div
+                    className={`rounded-full px-2 py-0.5 flex items-center justify-center min-w-[40px] ${
+                      filmData.vote_average >= 6.5
+                        ? "bg-green-600"
+                        : filmData.vote_average >= 5.0
+                          ? "bg-yellow-500"
+                          : "bg-red-600"
+                    }`}
+                  >
+                    <p className="text-white text-sm font-roboto-slab font-bold [text-shadow:_-1px_-1px_0_rgb(0_0_0_/_80%),_1px_-1px_0_rgb(0_0_0_/_80%),_-1px_1px_0_rgb(0_0_0_/_80%),_1px_1px_0_rgb(0_0_0_/_80%)]">
+                      {filmData.vote_average?.toFixed(1)}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-full px-2 py-0.5 flex items-center justify-center border border-white/60">
+                    <p className="text-white/80 text-sm font-roboto-slab font-bold">
+                      Coming Soon
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Metadata */}

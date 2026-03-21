@@ -14,6 +14,7 @@ type HeroMovie = {
   overview: string;
   backdrop_path: string;
   vote_average: number;
+  vote_count: number;
   genres: Genre[];
   trailerKey?: string;
 };
@@ -41,6 +42,8 @@ export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
   }, [current, goTo]);
 
   const movie = movies[current];
+
+  const hasVotes = movie.vote_count > 0;
 
   const scoreColor =
     movie.vote_average >= 6.5
@@ -123,9 +126,15 @@ export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
                 ▶ Watch Trailer
               </a>
             )}
-            <span className={`${scoreColor} text-white font-roboto-slab font-bold text-sm px-3 py-1.5 rounded-full`}>
-              {movie.vote_average.toFixed(1)}
-            </span>
+            {hasVotes ? (
+              <span className={`${scoreColor} text-white font-roboto-slab font-bold text-xs px-2 py-1 rounded-full`}>
+                {movie.vote_average.toFixed(1)}
+              </span>
+            ) : (
+              <span className="border border-white/60 text-white/80 font-roboto-slab font-bold text-xs px-2 py-1 rounded-full">
+                Coming Soon
+              </span>
+            )}
           </div>
         </div>
       </div>

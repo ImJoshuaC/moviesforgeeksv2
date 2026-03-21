@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Spin as Hamburger } from "hamburger-react";
@@ -16,6 +16,14 @@ type AvatarCircleProps = {
   avatarUrl: string | null;
   email: string;
   size: number;
+};
+
+type Suggestion = {
+  id: number;
+  media_type: "movie" | "tv";
+  title: string;
+  poster_path: string;
+  year: string;
 };
 
 function AvatarCircle({ avatarUrl, email, size }: AvatarCircleProps) {
@@ -43,11 +51,63 @@ function AvatarCircle({ avatarUrl, email, size }: AvatarCircleProps) {
   );
 }
 
+function SuggestionsDropdown({
+  suggestions,
+  onSelect,
+  visible,
+}: {
+  suggestions: Suggestion[];
+  onSelect: (s: Suggestion) => void;
+  visible: boolean;
+}) {
+  return (
+    <div
+      className={`
+        absolute left-0 right-0 top-[calc(100%+4px)]
+        bg-[#1c1c1c] border border-white/10 rounded-md shadow-xl z-50 overflow-hidden
+        transition-all duration-200 ease-out
+        ${visible && suggestions.length > 0
+          ? "opacity-100 translate-y-0 pointer-events-auto"
+          : "opacity-0 -translate-y-1 pointer-events-none"}
+      `}
+    >
+      {suggestions.map((s, i) => (
+        <button
+          key={s.id}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            onSelect(s);
+          }}
+          style={{
+            animation: visible ? `suggestion-item-in 180ms ease-out both` : "none",
+            animationDelay: visible ? `${i * 45}ms` : "0ms",
+          }}
+          className="flex items-center gap-3 w-full px-3 py-2 hover:bg-white/10 transition-colors duration-100 text-left"
+        >
+          <img
+            src={`https://image.tmdb.org/t/p/w92${s.poster_path}`}
+            alt={s.title}
+            className="w-8 h-12 object-cover rounded shrink-0"
+          />
+          <div className="flex flex-col min-w-0">
+            <span className="text-white text-sm font-roboto-slab truncate">{s.title}</span>
+            {s.year && <span className="text-white/40 text-xs mt-0.5">{s.year}</span>}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
+  const mobileSearchWrapperRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -82,6 +142,42 @@ export const Navbar = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Debounced suggestions fetch
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data);
+        setShowSuggestions(data.length > 0);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(e.target as Node) &&
+        mobileSearchWrapperRef.current &&
+        !mobileSearchWrapperRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -91,8 +187,17 @@ export const Navbar = () => {
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && query.trim()) {
+      setShowSuggestions(false);
       router.push(`/search?q=${encodeURIComponent(query.trim())}`);
     }
+  };
+
+  const handleSelectSuggestion = (s: Suggestion) => {
+    setQuery("");
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setOpen(false);
+    router.push(s.media_type === "movie" ? `/films/${s.id}` : `/shows/${s.id}`);
   };
 
   const navLinkClass = "hover:text-[#4ade80] transition-colors duration-150";
@@ -102,24 +207,31 @@ export const Navbar = () => {
       {/* Mobile */}
       <div className="lg:hidden flex flex-col items-center px-8 pt-3 font-roboto-slab text-md">
         <h1 className="text-3xl font-jaro">
-          <a href="..">MoviesForGeeks</a>
+          <a href="/">MoviesForGeeks</a>
         </h1>
         <Hamburger toggled={isOpen} toggle={setOpen} size={20} />
         {isOpen && (
-          <>
-            <div className="px-3 rounded-2xl bg-[#D9D9D9]/50">
+          <div style={{ animation: "mobile-drawer-in 200ms ease-out both" }}>
+            <div ref={mobileSearchWrapperRef} className="relative w-full px-3 rounded-2xl bg-[#D9D9D9]/50">
               <input
                 type="text"
                 placeholder="Search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleSearch}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 className="w-full bg-transparent outline-none text-white/50 placeholder-white/50"
+              />
+              <SuggestionsDropdown
+                suggestions={suggestions}
+                onSelect={handleSelectSuggestion}
+                visible={showSuggestions}
               />
             </div>
             <a href="../films/" className={`pt-2 pb-1 ${navLinkClass}`}>FILMS</a>
             <a href="../shows/" className={`py-1 ${navLinkClass}`}>TV SHOWS</a>
-            <a href="../people/" className={`pt-1 pb-2 ${navLinkClass}`}>PEOPLE</a>
+            <a href="../people/" className={`py-1 ${navLinkClass}`}>PEOPLE</a>
+            <Link href="/watchlist" className={`pt-1 pb-2 ${navLinkClass}`}>FAVORITES</Link>
             {user ? (
               <>
                 <div className="flex items-center gap-2 py-1">
@@ -143,14 +255,14 @@ export const Navbar = () => {
                 <Link href="/auth/signup" className={`py-1 ${navLinkClass}`}>CREATE ACCOUNT</Link>
               </>
             )}
-          </>
+          </div>
         )}
       </div>
 
       {/* Desktop */}
       <div className="hidden lg:flex items-center justify-between h-full px-8 py-6">
         <h1 className="text-3xl font-jaro">
-          <a href="..">MoviesForGeeks</a>
+          <a href="/">MoviesForGeeks</a>
         </h1>
         <div className="flex gap-6 font-roboto-slab text-lg items-center">
           {!user && (
@@ -161,17 +273,24 @@ export const Navbar = () => {
           )}
           <Link href="/films" className={navLinkClass}>FILMS</Link>
           <Link href="/shows" className={navLinkClass}>TV SHOWS</Link>
+          <Link href="/people" className={navLinkClass}>PEOPLE</Link>
           {user && (
             <Link href="/watchlist" className={navLinkClass}>FAVORITES</Link>
           )}
-          <div className="px-5 rounded-2xl bg-[#D9D9D9]/50">
+          <div ref={searchWrapperRef} className="relative px-5 rounded-2xl bg-[#D9D9D9]/50">
             <input
               type="text"
               placeholder="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleSearch}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               className="w-full bg-transparent outline-none text-white/50 placeholder-white/50"
+            />
+            <SuggestionsDropdown
+              suggestions={suggestions}
+              onSelect={handleSelectSuggestion}
+              visible={showSuggestions}
             />
           </div>
 

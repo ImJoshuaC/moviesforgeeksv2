@@ -44,6 +44,7 @@ export default async function Home() {
         overview: details.overview,
         backdrop_path: details.backdrop_path,
         vote_average: details.vote_average,
+        vote_count: details.vote_count,
         genres: details.genres ?? [],
         trailerKey: trailer?.key,
       };

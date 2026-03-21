@@ -2,6 +2,7 @@
 
 import React, { useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
 type CastMember = {
@@ -68,17 +69,18 @@ export default function CastCarousel({ cast }: CastCarouselProps) {
         onDragStart={(e) => e.preventDefault()}
       >
         {cast.map((member, index) => (
-          <div
+          <Link
             key={member.cast_id ?? `${member.id}-${member.credit_id}-${index}`}
-            className="shrink-0 w-32 sm:w-36 md:w-40"
+            href={`/people/${member.id}`}
+            className="shrink-0 w-32 sm:w-36 md:w-40 transition-transform duration-300 hover:scale-105"
           >
             <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-black/40">
               {member.profile_path ? (
                 <Image
-                  src={`https://image.tmdb.org/t/p/w185${member.profile_path}`}
+                  src={`https://image.tmdb.org/t/p/w342${member.profile_path}`}
                   alt={member.name ?? "Cast member"}
                   fill
-                  sizes="160px"
+                  sizes="(max-width: 640px) 128px, (max-width: 768px) 144px, 160px"
                   className="object-cover"
                 />
               ) : (
@@ -95,7 +97,7 @@ export default function CastCarousel({ cast }: CastCarouselProps) {
                 as {member.character}
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
