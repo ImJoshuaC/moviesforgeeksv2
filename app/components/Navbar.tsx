@@ -211,50 +211,62 @@ export const Navbar = () => {
         </h1>
         <Hamburger toggled={isOpen} toggle={setOpen} size={20} />
         {isOpen && (
-          <div style={{ animation: "mobile-drawer-in 200ms ease-out both" }}>
-            <div ref={mobileSearchWrapperRef} className="relative w-full px-3 rounded-2xl bg-[#D9D9D9]/50">
-              <input
-                type="text"
-                placeholder="Search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleSearch}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                className="w-full bg-transparent outline-none text-white/50 placeholder-white/50"
-              />
+          <div className="flex flex-col items-center w-full" style={{ animation: "mobile-drawer-in 200ms ease-out both" }}>
+            <div ref={mobileSearchWrapperRef} className="relative w-48 mt-2 mb-1">
+              <div className="flex items-center px-3 rounded-2xl bg-[#D9D9D9]/50">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  className="flex-1 min-w-0 bg-transparent outline-none text-white/50 placeholder-white/50 py-1"
+                />
+                {query && (
+                  <button
+                    onMouseDown={(e) => { e.preventDefault(); setQuery(""); setSuggestions([]); setShowSuggestions(false); }}
+                    className="ml-1 text-white/40 hover:text-white/70 transition-colors duration-100 text-lg leading-none"
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
               <SuggestionsDropdown
                 suggestions={suggestions}
                 onSelect={handleSelectSuggestion}
                 visible={showSuggestions}
               />
             </div>
-            <a href="../films/" className={`pt-2 pb-1 ${navLinkClass}`}>FILMS</a>
-            <a href="../shows/" className={`py-1 ${navLinkClass}`}>TV SHOWS</a>
-            <a href="../people/" className={`py-1 ${navLinkClass}`}>PEOPLE</a>
-            <Link href="/watchlist" className={`pt-1 pb-2 ${navLinkClass}`}>FAVORITES</Link>
+            <a href="../films/" className={`block py-1.5 ${navLinkClass}`}>FILMS</a>
+            <a href="../shows/" className={`block py-1.5 ${navLinkClass}`}>TV SHOWS</a>
+            <a href="../people/" className={`block py-1.5 ${navLinkClass}`}>PEOPLE</a>
+            <Link href="/watchlist" className={`block py-1.5 ${navLinkClass}`}>FAVORITES</Link>
             {user ? (
-              <>
+              <div className="flex flex-col items-center w-full border-t border-white/10 mt-2 pt-2 gap-1">
                 <div className="flex items-center gap-2 py-1">
                   <AvatarCircle
                     avatarUrl={profile?.avatar_url ?? null}
                     email={user.email ?? "?"}
                     size={28}
                   />
-                  <span className="text-white/50 text-sm">
-                    {profile?.username ?? user.email}
-                  </span>
+                  {profile?.username && (
+                    <span className="text-white/50 text-sm">{profile.username}</span>
+                  )}
                 </div>
-                <Link href="/profile" className={`py-1 ${navLinkClass}`}>PROFILE</Link>
-                <button onClick={handleSignOut} className="py-1 text-red-400 hover:text-red-300 transition-colors duration-150">
+                <Link href="/profile" className={`block py-1.5 ${navLinkClass}`}>PROFILE</Link>
+                <button onClick={handleSignOut} className="block py-1.5 text-red-400 hover:text-red-300 transition-colors duration-150">
                   SIGN OUT
                 </button>
-              </>
+              </div>
             ) : (
-              <>
-                <Link href="/auth/login" className={`py-1 ${navLinkClass}`}>SIGN IN</Link>
-                <Link href="/auth/signup" className={`py-1 ${navLinkClass}`}>CREATE ACCOUNT</Link>
-              </>
+              <div className="flex flex-col items-center w-full border-t border-white/10 mt-2 pt-2 gap-1">
+                <Link href="/auth/login" className={`block py-1.5 ${navLinkClass}`}>SIGN IN</Link>
+                <Link href="/auth/signup" className={`block py-1.5 ${navLinkClass}`}>CREATE ACCOUNT</Link>
+              </div>
             )}
+            <div className="pb-3" />
           </div>
         )}
       </div>
@@ -277,16 +289,27 @@ export const Navbar = () => {
           {user && (
             <Link href="/watchlist" className={navLinkClass}>FAVORITES</Link>
           )}
-          <div ref={searchWrapperRef} className="relative px-5 rounded-2xl bg-[#D9D9D9]/50">
-            <input
-              type="text"
-              placeholder="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleSearch}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              className="w-full bg-transparent outline-none text-white/50 placeholder-white/50"
-            />
+          <div ref={searchWrapperRef} className="relative">
+            <div className="flex items-center px-5 rounded-2xl bg-[#D9D9D9]/50">
+              <input
+                type="text"
+                placeholder="Search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleSearch}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                className="bg-transparent outline-none text-white/50 placeholder-white/50 py-1"
+              />
+              {query && (
+                <button
+                  onMouseDown={(e) => { e.preventDefault(); setQuery(""); setSuggestions([]); setShowSuggestions(false); }}
+                  className="ml-1 text-white/40 hover:text-white/70 transition-colors duration-100 text-lg leading-none"
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
             <SuggestionsDropdown
               suggestions={suggestions}
               onSelect={handleSelectSuggestion}
