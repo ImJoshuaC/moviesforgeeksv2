@@ -38,17 +38,19 @@ export default async function SpecificShowsPage({
   ]);
 
   return (
-    <div className="relative w-full min-h-screen">
+    <div className="relative w-full min-h-screen bg-[#161616]">
       {/* Backdrop Image */}
-      <Image
-        src={`https://image.tmdb.org/t/p/w1280${showData.backdrop_path}`}
-        alt={showData.name ?? "Show Poster"}
-        fill
-        priority
-        className="object-cover z-0"
-        quality={90}
-        sizes="100vw"
-      />
+      {showData.backdrop_path && (
+        <Image
+          src={`https://image.tmdb.org/t/p/w1280${showData.backdrop_path}`}
+          alt={showData.name ?? "Show Poster"}
+          fill
+          priority
+          className="object-cover z-0"
+          quality={90}
+          sizes="100vw"
+        />
+      )}
       {/* Gradient overlay — darkens toward bottom for readability */}
       <div className="absolute inset-0 bg-linear-to-b from-black/70 via-black/80 to-black/95 z-10" />
       {/* Content goes on top of backdrop but below navbar */}

@@ -15,20 +15,21 @@ export default function Carousel<T,>({ items, renderItem, getKey }: CarouselProp
   const startX = useRef(0);
   const scrollStart = useRef(0);
 
-  const tripled = [...items, ...items, ...items];
+  const shouldLoop = items.length >= 4;
+  const displayItems = shouldLoop ? [...items, ...items, ...items] : items;
 
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-    container.scrollLeft = container.scrollWidth / 3;
-  }, []);
+    if (shouldLoop) container.scrollLeft = container.scrollWidth / 3;
+  }, [shouldLoop]);
 
   function getSingleSetWidth() {
     return (scrollRef.current?.scrollWidth ?? 0) / 3;
   }
 
   function handleScroll() {
-    if (isDragging.current) return;
+    if (!shouldLoop || isDragging.current) return;
     const container = scrollRef.current;
     if (!container) return;
     const w = getSingleSetWidth();
@@ -39,18 +40,22 @@ export default function Carousel<T,>({ items, renderItem, getKey }: CarouselProp
   function scrollLeft() {
     const container = scrollRef.current;
     if (!container) return;
-    const w = getSingleSetWidth();
     const amount = container.clientWidth * 0.75;
-    if (container.scrollLeft - amount <= 0) container.scrollLeft += w;
+    if (shouldLoop) {
+      const w = getSingleSetWidth();
+      if (container.scrollLeft - amount <= 0) container.scrollLeft += w;
+    }
     container.scrollBy({ left: -amount, behavior: "smooth" });
   }
 
   function scrollRight() {
     const container = scrollRef.current;
     if (!container) return;
-    const w = getSingleSetWidth();
     const amount = container.clientWidth * 0.75;
-    if (container.scrollLeft + amount >= w * 2) container.scrollLeft -= w;
+    if (shouldLoop) {
+      const w = getSingleSetWidth();
+      if (container.scrollLeft + amount >= w * 2) container.scrollLeft -= w;
+    }
     container.scrollBy({ left: amount, behavior: "smooth" });
   }
 
@@ -69,13 +74,15 @@ export default function Carousel<T,>({ items, renderItem, getKey }: CarouselProp
     e.preventDefault();
     const x = e.pageX - container.offsetLeft;
     container.scrollLeft = scrollStart.current - (x - startX.current) * 1.5;
-    const w = getSingleSetWidth();
-    if (container.scrollLeft >= w * 2) {
-      container.scrollLeft -= w;
-      scrollStart.current -= w;
-    } else if (container.scrollLeft <= 0) {
-      container.scrollLeft += w;
-      scrollStart.current += w;
+    if (shouldLoop) {
+      const w = getSingleSetWidth();
+      if (container.scrollLeft >= w * 2) {
+        container.scrollLeft -= w;
+        scrollStart.current -= w;
+      } else if (container.scrollLeft <= 0) {
+        container.scrollLeft += w;
+        scrollStart.current += w;
+      }
     }
   }
 
@@ -95,7 +102,7 @@ export default function Carousel<T,>({ items, renderItem, getKey }: CarouselProp
         onMouseLeave={onMouseUp}
         onDragStart={(e) => e.preventDefault()}
       >
-        {tripled.map((item, index) => (
+        {displayItems.map((item: T, index: number) => (
           <div
             key={getKey(item, index)}
             className="shrink-0 w-[38vw] sm:w-[25vw] md:w-[18vw] lg:w-[14vw] xl:w-[11vw]"

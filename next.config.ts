@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
         hostname: "image.tmdb.org",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
 };

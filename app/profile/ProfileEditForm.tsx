@@ -1,42 +1,87 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { updateProfile } from "@/app/actions/profile";
+import { useState, useTransition, useRef } from "react";
+import Image from "next/image";
+import { updateProfile, uploadAvatar } from "@/app/actions/profile";
 
 type Props = {
+  initialDisplayName: string | null;
   initialUsername: string | null;
   initialBio: string | null;
   initialAvatarUrl: string | null;
 };
 
 export default function ProfileEditForm({
+  initialDisplayName,
   initialUsername,
   initialBio,
   initialAvatarUrl,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
   const [username, setUsername] = useState(initialUsername ?? "");
   const [bio, setBio] = useState(initialBio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
+  const [avatarPreview, setAvatarPreview] = useState(initialAvatarUrl ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Photo must be under 2 MB.");
+      e.target.value = "";
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      setError("Only JPEG, PNG, WebP, or GIF images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    setError("");
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
   const handleSave = () => {
     setError("");
     startTransition(async () => {
-      const result = await updateProfile(username, bio, avatarUrl);
+      let finalAvatarUrl = avatarUrl;
+
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append("file", avatarFile);
+        const uploadResult = await uploadAvatar(formData);
+        if (uploadResult.error) {
+          setError(uploadResult.error);
+          return;
+        }
+        finalAvatarUrl = uploadResult.url ?? avatarUrl;
+        setAvatarUrl(finalAvatarUrl);
+      }
+
+      const result = await updateProfile(displayName, username, bio, finalAvatarUrl);
       if (result?.error) {
         setError(result.error);
       } else {
+        setAvatarFile(null);
         setIsEditing(false);
       }
     });
   };
 
   const handleCancel = () => {
+    setDisplayName(initialDisplayName ?? "");
     setUsername(initialUsername ?? "");
     setBio(initialBio ?? "");
     setAvatarUrl(initialAvatarUrl ?? "");
+    setAvatarPreview(initialAvatarUrl ?? "");
+    setAvatarFile(null);
     setError("");
     setIsEditing(false);
   };
@@ -54,41 +99,77 @@ export default function ProfileEditForm({
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-md">
-      {/* Avatar preview */}
-      {avatarUrl && (
-        <div className="flex items-center gap-3">
-          <img
-            src={avatarUrl}
+      {/* Avatar upload */}
+      <div className="flex items-center gap-4">
+        {avatarPreview ? (
+          <Image
+            src={avatarPreview}
             alt="Avatar preview"
-            className="w-12 h-12 rounded-full object-cover border border-white/20"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            width={64}
+            height={64}
+            className="w-16 h-16 rounded-full object-cover border border-white/20"
+            unoptimized={avatarPreview.startsWith("blob:")}
           />
-          <span className="text-white/40 text-xs font-roboto-slab">Preview</span>
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-[#4ade80] flex items-center justify-center shrink-0">
+            <span className="text-black text-xl font-bold font-roboto-slab">
+              {(displayName || username || "U")[0].toUpperCase()}
+            </span>
+          </div>
+        )}
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-1.5 border border-white/30 text-white font-roboto-slab text-xs rounded-md hover:border-white/60 transition-colors"
+          >
+            Upload photo
+          </button>
+          {avatarFile && (
+            <span className="text-white/40 text-xs font-roboto-slab truncate max-w-[160px]">
+              {avatarFile.name}
+            </span>
+          )}
         </div>
-      )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
 
+      {/* Display name */}
       <input
         type="text"
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        placeholder="Display name"
+        value={displayName}
+        onChange={(e) => setDisplayName(e.target.value)}
         className="w-full bg-[#2a2a2a] border border-white/20 rounded-md px-4 py-3 text-white placeholder-white/40 outline-none focus:border-white/50 font-roboto-slab"
       />
 
+      {/* Username */}
+      <div className="relative">
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-roboto-slab select-none">
+          @
+        </span>
+        <input
+          type="text"
+          placeholder="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+          className="w-full bg-[#2a2a2a] border border-white/20 rounded-md pl-8 pr-4 py-3 text-white placeholder-white/40 outline-none focus:border-white/50 font-roboto-slab"
+        />
+      </div>
+
+      {/* Bio */}
       <textarea
         placeholder="Bio"
         value={bio}
         onChange={(e) => setBio(e.target.value)}
         rows={4}
         className="w-full bg-[#2a2a2a] border border-white/20 rounded-md px-4 py-3 text-white placeholder-white/40 outline-none focus:border-white/50 font-roboto-slab resize-none"
-      />
-
-      <input
-        type="text"
-        placeholder="Avatar URL (https://...)"
-        value={avatarUrl}
-        onChange={(e) => setAvatarUrl(e.target.value)}
-        className="w-full bg-[#2a2a2a] border border-white/20 rounded-md px-4 py-3 text-white placeholder-white/40 outline-none focus:border-white/50 font-roboto-slab"
       />
 
       {error && (

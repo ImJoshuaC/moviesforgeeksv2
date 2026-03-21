@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/app/actions/profile";
 import ProfileEditForm from "./ProfileEditForm";
@@ -12,7 +13,7 @@ export default async function ProfilePage() {
   const result = await getProfile();
   const profile = result?.profile ?? null;
 
-  const displayName = profile?.username || user.email?.split("@")[0] || "User";
+  const displayName = profile?.display_name || profile?.username || user.email?.split("@")[0] || "User";
   const initial = displayName[0].toUpperCase();
 
   return (
@@ -21,9 +22,11 @@ export default async function ProfilePage() {
         {/* Avatar */}
         <div className="mb-6">
           {profile?.avatar_url ? (
-            <img
+            <Image
               src={profile.avatar_url}
               alt={displayName}
+              width={96}
+              height={96}
               className="w-24 h-24 rounded-full object-cover border-2 border-white/20"
             />
           ) : (
@@ -35,13 +38,17 @@ export default async function ProfilePage() {
           )}
         </div>
 
-        {/* Name & email */}
+        {/* Display name */}
         <h1 className="text-white text-3xl md:text-4xl font-roboto-slab font-bold uppercase mb-1">
           {displayName}
         </h1>
-        <p className="text-white/40 font-roboto-serif text-sm mb-4">
-          {user.email}
-        </p>
+
+        {/* @username */}
+        {profile?.username && (
+          <p className="text-white/40 font-roboto-serif text-sm mb-4">
+            @{profile.username}
+          </p>
+        )}
 
         {/* Bio */}
         <p className="text-white/70 font-roboto-serif text-base mb-8 leading-relaxed">
@@ -52,6 +59,7 @@ export default async function ProfilePage() {
 
         {/* Edit form */}
         <ProfileEditForm
+          initialDisplayName={profile?.display_name ?? null}
           initialUsername={profile?.username ?? null}
           initialBio={profile?.bio ?? null}
           initialAvatarUrl={profile?.avatar_url ?? null}

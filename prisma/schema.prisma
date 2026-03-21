@@ -8,11 +8,12 @@ datasource db {
 }
 
 model Profile {
-  id         String      @id
-  username   String?
-  bio        String?
-  avatar_url String?
-  updated_at DateTime    @updatedAt
+  id           String      @id
+  username     String?     @unique
+  display_name String?
+  bio          String?
+  avatar_url   String?
+  updated_at   DateTime    @updatedAt
 
   watchlist  Watchlist[]
   reviews    Review[]
