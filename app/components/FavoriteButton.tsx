@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { FaBookmark, FaRegBookmark } from "react-icons/fa";
-import { addToWatchlist, removeFromWatchlist } from "@/app/actions/watchlist";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
 
 type Props = {
   mediaId: number;
@@ -10,20 +10,20 @@ type Props = {
   title: string;
   posterPath: string;
   releaseYear?: number;
-  initialIsInWatchlist: boolean;
+  initialIsFavorite: boolean;
   isLoggedIn: boolean;
 };
 
-export default function WatchlistButton({
+export default function FavoriteButton({
   mediaId,
   mediaType,
   title,
   posterPath,
   releaseYear,
-  initialIsInWatchlist,
+  initialIsFavorite,
   isLoggedIn,
 }: Props) {
-  const [inWatchlist, setInWatchlist] = useState(initialIsInWatchlist);
+  const [isFav, setIsFav] = useState(initialIsFavorite);
   const [isPending, startTransition] = useTransition();
   const pendingAction = useRef<"add" | "remove">("add");
 
@@ -33,28 +33,28 @@ export default function WatchlistButton({
         href="/auth/login"
         className="flex flex-col items-center justify-center gap-1.5 px-4 py-3 border border-white/10 rounded-xl text-white/30 min-w-[72px] hover:bg-white/5 transition-colors"
       >
-        <FaRegBookmark size={18} />
-        <span className="text-[10px] font-roboto-slab uppercase tracking-wide">Watchlist</span>
+        <FaRegHeart size={18} />
+        <span className="text-[10px] font-roboto-slab uppercase tracking-wide">Liked</span>
       </a>
     );
   }
 
   const handleClick = () => {
-    pendingAction.current = inWatchlist ? "remove" : "add";
+    pendingAction.current = isFav ? "remove" : "add";
     startTransition(async () => {
-      if (inWatchlist) {
-        const result = await removeFromWatchlist(mediaId, mediaType);
+      if (isFav) {
+        const result = await removeFromFavorites(mediaId, mediaType);
         if (result?.error) {
-          console.error("[WatchlistButton] remove failed:", result.error);
+          console.error("[FavoriteButton] remove failed:", result.error);
         } else {
-          setInWatchlist(false);
+          setIsFav(false);
         }
       } else {
-        const result = await addToWatchlist(mediaId, mediaType, title, posterPath, releaseYear);
+        const result = await addToFavorites(mediaId, mediaType, title, posterPath, releaseYear);
         if (result?.error) {
-          console.error("[WatchlistButton] add failed:", result.error);
+          console.error("[FavoriteButton] add failed:", result.error);
         } else {
-          setInWatchlist(true);
+          setIsFav(true);
         }
       }
     });
@@ -67,20 +67,20 @@ export default function WatchlistButton({
       className={`flex flex-col items-center justify-center gap-1.5 px-4 py-3 border rounded-xl transition-colors min-w-[72px] disabled:cursor-not-allowed ${
         isPending
           ? "border-white/20 text-white/50 bg-white/5"
-          : inWatchlist
-          ? "border-[#4ade80]/50 text-[#4ade80] bg-[#4ade80]/10 hover:bg-red-500/10 hover:border-red-400/50 hover:text-red-400"
+          : isFav
+          ? "border-red-400/50 text-red-400 bg-red-500/10 hover:bg-red-500/20"
           : "border-white/20 text-white/70 hover:bg-white/10 hover:text-white"
       }`}
     >
       {isPending ? (
         <span className="inline-block w-[18px] h-[18px] border-2 border-current border-t-transparent rounded-full animate-spin" />
-      ) : inWatchlist ? (
-        <FaBookmark size={18} />
+      ) : isFav ? (
+        <FaHeart size={18} />
       ) : (
-        <FaRegBookmark size={18} />
+        <FaRegHeart size={18} />
       )}
       <span className="text-[10px] font-roboto-slab uppercase tracking-wide">
-        {isPending ? (pendingAction.current === "add" ? "Adding" : "Removing") : "Watchlist"}
+        {isPending ? (pendingAction.current === "add" ? "Liking" : "Removing") : "Liked"}
       </span>
     </button>
   );

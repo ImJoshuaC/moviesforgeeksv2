@@ -67,8 +67,33 @@ export async function getReviews(
   return prisma.review.findMany({
     where: { media_id: mediaId, media_type: mediaType },
     orderBy: { created_at: 'desc' },
-    include: { profile: true },
+    include: { profile: true, votes: true },
   })
+}
+
+export async function voteOnReview(reviewId: string, value: 1 | -1) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not logged in' }
+
+  const existing = await prisma.reviewVote.findUnique({
+    where: { review_id_user_id: { review_id: reviewId, user_id: user.id } },
+  })
+
+  if (existing?.value === value) {
+    await prisma.reviewVote.delete({
+      where: { review_id_user_id: { review_id: reviewId, user_id: user.id } },
+    })
+    return { success: true }
+  }
+
+  await prisma.reviewVote.upsert({
+    where: { review_id_user_id: { review_id: reviewId, user_id: user.id } },
+    create: { review_id: reviewId, user_id: user.id, value },
+    update: { value },
+  })
+
+  return { success: true }
 }
 
 export async function deleteReview(reviewId: string, mediaId: number, mediaType: 'movie' | 'show') {

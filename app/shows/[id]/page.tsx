@@ -4,7 +4,9 @@ import WatchlistButton from "@/app/components/WatchlistButton";
 import ReviewSection from "@/app/components/ReviewSection";
 import TrailerModal from "@/app/components/TrailerModal";
 import RecommendedCarousel from "@/app/components/RecommendedCarousel";
+import FavoriteButton from "@/app/components/FavoriteButton";
 import { isInWatchlist } from "@/app/actions/watchlist";
+import { isFavorite } from "@/app/actions/favorites";
 import { getReviews } from "@/app/actions/reviews";
 import { createClient } from "@/lib/supabase/server";
 
@@ -24,23 +26,26 @@ export default async function SpecificShowsPage({
 }) {
   const showId = (await params).id;
 
-  const [res, creditsRes, videosRes, recommendedRes] = await Promise.all([
+  const [res, creditsRes, videosRes, recommendedRes, providersRes] = await Promise.all([
     fetch(`https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`),
     fetch(`https://api.themoviedb.org/3/tv/${showId}/aggregate_credits?api_key=${API_KEY}&language=en-US`),
     fetch(`https://api.themoviedb.org/3/tv/${showId}/videos?api_key=${API_KEY}&language=en-US`),
     fetch(`https://api.themoviedb.org/3/tv/${showId}/recommendations?api_key=${API_KEY}&language=en-US`),
+    fetch(`https://api.themoviedb.org/3/tv/${showId}/watch/providers?api_key=${API_KEY}`),
   ]);
 
   const showData = await res.json();
   const creditsData = await creditsRes.json();
   const videosData = await videosRes.json();
   const recommendedData = await recommendedRes.json();
+  const providersData = await providersRes.json();
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [inWatchlist, reviews] = await Promise.all([
+  const [inWatchlist, inFavorites, reviews] = await Promise.all([
     isInWatchlist(Number(showId), "show"),
+    isFavorite(Number(showId), "show"),
     getReviews(Number(showId), "show"),
   ]);
 
@@ -77,6 +82,11 @@ export default async function SpecificShowsPage({
   if (writtenBy.length) crewDisplay.push({ label: "Written by", names: writtenBy });
   if (crewByRole["Executive Producer"]?.length) crewDisplay.push({ label: "Produced by", names: crewByRole["Executive Producer"] });
 
+  // Watch providers (US streaming only)
+  type WatchProvider = { provider_id: number; provider_name: string; logo_path: string };
+  const watchProviders: WatchProvider[] = providersData.results?.US?.flatrate ?? [];
+  const watchProvidersLink: string | null = providersData.results?.US?.link ?? null;
+
   // MovieForGeeks rating
   let mfgRating: number | null = null;
   if (reviews.length > 0) {
@@ -99,170 +109,205 @@ export default async function SpecificShowsPage({
         />
       )}
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-linear-to-b from-black/70 via-black/80 to-black/95 z-10" />
+      <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/75 to-[#161616] z-10" />
 
       {/* Content */}
-      <div className="relative z-20 p-4 md:p-6 lg:p-8">
-        <div className="w-full max-w-7xl mx-auto">
-          {/* Hero row */}
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8 lg:gap-10">
-            {/* Poster */}
-            <div className="shrink-0 w-48 md:w-64 mx-auto md:mx-0">
-              <Image
-                src={`https://image.tmdb.org/t/p/w500${showData.poster_path}`}
-                alt={showData.name ?? "Show Poster"}
-                width={300}
-                height={450}
-                quality={90}
-                className="w-full h-auto rounded-lg shadow-2xl"
-              />
-            </div>
+      <div className="relative z-20 px-2 py-4 md:px-3 md:py-6 lg:px-4 lg:py-8">
+        <div className="w-full max-w-7xl mx-auto flex flex-col gap-10">
 
-            {/* Info */}
-            <div className="flex flex-col gap-4 md:gap-5 flex-1">
-              {/* Title */}
-              <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-roboto-slab font-black uppercase [text-shadow:2px_2px_4px_rgb(0_0_0/80%)]">
-                {showData.name}
-              </h1>
+          {/* 2-column grid: left=info+cast+providers, right=reviews */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 items-start">
 
-              {/* Ratings row */}
-              <div className="flex flex-wrap gap-3">
-                {/* TMDB */}
-                {showData.vote_count > 0 ? (
-                  <div className="flex flex-col items-center bg-white/5 border border-white/10 rounded-xl px-4 py-2 min-w-[80px]">
-                    <span className="text-white/50 text-[10px] uppercase tracking-widest font-roboto-slab mb-0.5">TMDB</span>
-                    <span
-                      className={`text-xl font-roboto-slab font-black ${
-                        showData.vote_average >= 6.5
-                          ? "text-green-400"
-                          : showData.vote_average >= 5.0
-                            ? "text-yellow-400"
-                            : "text-red-400"
-                      }`}
-                    >
-                      {showData.vote_average?.toFixed(1)}
+            {/* LEFT column */}
+            <div className="flex flex-col gap-10 min-w-0">
+              {/* Hero row: poster + info */}
+              <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+                {/* Poster */}
+                <div className="shrink-0 w-56 md:w-72 mx-auto md:mx-0">
+                  <Image
+                    src={`https://image.tmdb.org/t/p/w500${showData.poster_path}`}
+                    alt={showData.name ?? "Show Poster"}
+                    width={400}
+                    height={600}
+                    quality={95}
+                    className="w-full h-auto rounded-xl shadow-2xl"
+                  />
+                </div>
+
+                {/* Info */}
+                <div className="flex flex-col gap-4 flex-1">
+                  {/* Title */}
+                  <h1 className="text-white text-3xl md:text-4xl font-roboto-slab font-black uppercase [text-shadow:2px_2px_4px_rgb(0_0_0/80%)]">
+                    {showData.name}
+                  </h1>
+
+                  {/* Metadata */}
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-white/75 text-sm font-roboto-serif">
+                    {showData.first_air_date && <span>{showData.first_air_date.slice(0, 4)}</span>}
+                    {showData.number_of_seasons && (
+                      <><span>·</span><span>{showData.number_of_seasons} Season{showData.number_of_seasons !== 1 ? "s" : ""}</span></>
+                    )}
+                    {crewByRole["Director"]?.length > 0 && (
+                      <><span>·</span><span>{crewByRole["Director"][0]}</span></>
+                    )}
+                  </div>
+
+                  {/* Ratings row */}
+                  <div className="flex items-center gap-5 py-1">
+                    {showData.vote_count > 0 ? (
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-white/55 text-[10px] font-roboto-slab uppercase tracking-widest">TMDB</span>
+                        <span className={`text-2xl font-roboto-slab font-black ${showData.vote_average >= 6.5 ? "text-green-400" : showData.vote_average >= 5.0 ? "text-yellow-400" : "text-red-400"}`}>
+                          {showData.vote_average?.toFixed(1)}
+                        </span>
+                        <span className="text-white/30 text-xs font-roboto-serif">/10</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-white/55 text-[10px] font-roboto-slab uppercase tracking-widest">TMDB</span>
+                        <span className="text-white/30 text-xs font-roboto-serif">Coming Soon</span>
+                      </div>
+                    )}
+                    <div className="w-px h-6 bg-white/20 shrink-0" />
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-white/55 text-[10px] font-roboto-slab uppercase tracking-widest">MFG</span>
+                      {mfgRating !== null ? (
+                        <>
+                          <span className={`text-2xl font-roboto-slab font-black ${mfgRating >= 6.5 ? "text-green-400" : mfgRating >= 5.0 ? "text-yellow-400" : "text-red-400"}`}>{mfgRating.toFixed(1)}</span>
+                          <span className="text-white/50 text-xs font-roboto-serif">/10</span>
+                        </>
+                      ) : (
+                        <span className="text-white/50 text-xs font-roboto-serif">No ratings</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-3">
+                    <WatchlistButton
+                      mediaId={Number(showId)}
+                      mediaType="show"
+                      title={showData.name}
+                      posterPath={showData.poster_path}
+                      releaseYear={showData.first_air_date ? Number(showData.first_air_date.split("-")[0]) : undefined}
+                      initialIsInWatchlist={inWatchlist}
+                      isLoggedIn={!!user}
+                    />
+                    <FavoriteButton
+                      mediaId={Number(showId)}
+                      mediaType="show"
+                      title={showData.name}
+                      posterPath={showData.poster_path}
+                      releaseYear={showData.first_air_date ? Number(showData.first_air_date.split("-")[0]) : undefined}
+                      initialIsFavorite={inFavorites}
+                      isLoggedIn={!!user}
+                    />
+                    {trailer && (
+                      <TrailerModal trailerKey={trailer.key} title={showData.name} />
+                    )}
+                  </div>
+
+                  {/* Genres */}
+                  {showData.genres?.length > 0 && (
+                    <p className="text-white/75 text-sm font-roboto-serif">
+                      <span className="text-white/55 font-bold font-roboto-slab">Genre:</span>{" "}
+                      {showData.genres.map((g: { id: number; name: string }) => g.name).join(", ")}
+                    </p>
+                  )}
+
+                  {/* Synopsis */}
+                  <div>
+                    <h2 className="text-white text-base font-roboto-slab font-bold mb-1.5">Synopsis</h2>
+                    <p className="text-white/90 text-sm font-roboto-serif leading-relaxed">
+                      {showData.overview || "No synopsis available."}
+                    </p>
+                  </div>
+
+                  {/* Crew */}
+                  {crewDisplay.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      {crewDisplay.map(({ label, names }) => (
+                        <p key={label} className="text-sm font-roboto-serif text-white/90">
+                          <span className="text-white/55 font-bold">{label}</span>{" "}
+                          {names.join(" · ")}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* End year */}
+                  {showData.last_air_date && (
+                    <span className="text-white/40 text-xs font-roboto-serif">
+                      Ended {showData.last_air_date.slice(0, 4)}
                     </span>
-                    <span className="text-white/30 text-[10px] font-roboto-serif">/ 10</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center bg-white/5 border border-white/10 rounded-xl px-4 py-2 min-w-[80px]">
-                    <span className="text-white/50 text-[10px] uppercase tracking-widest font-roboto-slab mb-0.5">TMDB</span>
-                    <span className="text-white/30 text-xs font-roboto-serif">Coming Soon</span>
-                  </div>
-                )}
-
-                {/* MovieForGeeks */}
-                <div className="flex flex-col items-center bg-white/5 border border-white/10 rounded-xl px-4 py-2 min-w-[80px]">
-                  <span className="text-white/50 text-[10px] uppercase tracking-widest font-roboto-slab mb-0.5">MFG</span>
-                  {mfgRating !== null ? (
-                    <>
-                      <span className="text-xl font-roboto-slab font-black text-[#4ade80]">
-                        {mfgRating.toFixed(1)}
-                      </span>
-                      <span className="text-white/30 text-[10px] font-roboto-serif">/ 10</span>
-                    </>
-                  ) : (
-                    <span className="text-white/30 text-xs font-roboto-serif">No ratings</span>
                   )}
                 </div>
               </div>
 
-              {/* Metadata */}
-              <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-                <p className="text-white/80 text-sm font-roboto-serif">
-                  <span className="font-bold text-white/60">First Air Date</span>{" "}
-                  {showData.first_air_date || "N/A"}
-                </p>
-                <p className="text-white/80 text-sm font-roboto-serif">
-                  <span className="font-bold text-white/60">Last Air Date</span>{" "}
-                  {showData.last_air_date || "N/A"}
-                </p>
-                <p className="text-white/80 text-sm font-roboto-serif">
-                  <span className="font-bold text-white/60">Seasons</span>{" "}
-                  {showData.number_of_seasons || "N/A"}
-                </p>
-                {showData.genres?.length > 0 && (
-                  <p className="text-white/80 text-sm font-roboto-serif">
-                    <span className="font-bold text-white/60">Genre</span>{" "}
-                    {showData.genres.map((g: { id: number; name: string }) => g.name).join(", ")}
-                  </p>
-                )}
-              </div>
-
-              {/* Synopsis */}
+              {/* Cast */}
               <div>
-                <h2 className="text-white text-lg font-roboto-slab font-bold mb-1.5 [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">
-                  Synopsis
-                </h2>
-                <p className="text-white/85 text-sm md:text-base font-roboto-serif font-normal leading-relaxed">
-                  {showData.overview || "No synopsis available."}
-                </p>
+                <h2 className="text-white font-roboto-slab text-xl uppercase [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">Cast</h2>
+                <hr className="border-white/30 my-1" />
+                <CastCarousel
+                  cast={
+                    (creditsData.cast ?? [])
+                      .map((m: { character?: string; roles?: { character: string }[] }) => ({
+                        ...m,
+                        character: m.roles?.[0]?.character ?? m.character ?? "",
+                      }))
+                      .filter((m: { character: string }) => m.character.trim().length > 0)
+                  }
+                />
               </div>
 
-              {/* Crew */}
-              {crewDisplay.length > 0 && (
-                <div className="flex flex-col gap-1.5">
-                  {crewDisplay.map(({ label, names }) => (
-                    <p key={label} className="text-sm font-roboto-serif text-white/80">
-                      <span className="text-white/45 font-bold">{label}</span>{" "}
-                      {names.join(" · ")}
-                    </p>
-                  ))}
+              {/* Where to Watch */}
+              {watchProviders.length > 0 && (
+                <div>
+                  <h2 className="text-white font-roboto-slab text-xl uppercase [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">Where to Watch</h2>
+                  <hr className="border-white/30 my-1" />
+                  <div className="flex flex-wrap gap-3 py-3">
+                    {watchProviders.map((p) => (
+                      <a
+                        key={p.provider_id}
+                        href={watchProvidersLink ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
+                      >
+                        <img
+                          src={`https://image.tmdb.org/t/p/w185${p.logo_path}`}
+                          alt={p.provider_name}
+                          title={p.provider_name}
+                          className="w-20 h-20 rounded-2xl object-cover shadow-md"
+                        />
+                        <span className="text-white/50 text-xs font-roboto-slab text-center max-w-[80px] leading-tight">
+                          {p.provider_name}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
-
-              {/* Action buttons */}
-              <div className="flex flex-wrap gap-3 mt-1">
-                <WatchlistButton
-                  mediaId={Number(showId)}
-                  mediaType="show"
-                  title={showData.name}
-                  posterPath={showData.poster_path}
-                  initialIsInWatchlist={inWatchlist}
-                  isLoggedIn={!!user}
-                />
-                {trailer && (
-                  <TrailerModal trailerKey={trailer.key} title={showData.name} />
-                )}
-              </div>
             </div>
-          </div>
 
-          {/* Cast */}
-          <div className="mt-10">
-            <h2 className="text-white font-roboto-slab text-xl md:text-2xl uppercase [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">
-              Cast
-            </h2>
-            <hr className="border-white/30 my-1" />
-            <CastCarousel
-              cast={
-                (creditsData.cast ?? [])
-                  .map((m: { character?: string; roles?: { character: string }[] }) => ({
-                    ...m,
-                    character: m.roles?.[0]?.character ?? m.character ?? "",
-                  }))
-                  .filter((m: { character: string }) => m.character.trim().length > 0)
-              }
+            {/* RIGHT column: ratings distribution + reviews */}
+            <ReviewSection
+              mediaId={Number(showId)}
+              mediaType="show"
+              initialReviews={reviews}
+              currentUserId={user?.id ?? null}
+              initialCount={watchProviders.length > 0 ? 3 : 2}
             />
           </div>
 
-          {/* Recommendations */}
+          {/* More Like This — full width */}
           {recommendations.length > 0 && (
-            <div className="mt-10">
-              <h2 className="text-white font-roboto-slab text-xl md:text-2xl uppercase [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">
-                More Like This
-              </h2>
+            <div>
+              <h2 className="text-white font-roboto-slab text-xl uppercase [text-shadow:1px_1px_2px_rgb(0_0_0/80%)]">More Like This</h2>
               <hr className="border-white/30 my-1" />
               <RecommendedCarousel items={recommendations} mediaType="show" />
             </div>
           )}
-
-          <ReviewSection
-            mediaId={Number(showId)}
-            mediaType="show"
-            initialReviews={reviews}
-            currentUserId={user?.id ?? null}
-          />
         </div>
       </div>
     </div>

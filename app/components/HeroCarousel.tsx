@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { FaTimes } from "react-icons/fa";
 
 type Genre = { id: number; name: string };
 
@@ -22,17 +23,21 @@ type HeroMovie = {
 export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
   const [current, setCurrent] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
+
+  const closeTrailer = useCallback(() => setTrailerOpen(false), []);
 
   const goTo = useCallback(
     (index: number) => {
       if (transitioning) return;
       setTransitioning(true);
+      closeTrailer();
       setTimeout(() => {
         setCurrent((index + movies.length) % movies.length);
         setTransitioning(false);
       }, 300);
     },
-    [transitioning, movies.length]
+    [transitioning, movies.length, closeTrailer]
   );
 
   // Auto-advance every 6 seconds
@@ -41,16 +46,24 @@ export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
     return () => clearInterval(timer);
   }, [current, goTo]);
 
+  // Escape key closes trailer
+  useEffect(() => {
+    if (!trailerOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeTrailer(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [trailerOpen, closeTrailer]);
+
+  // Prevent body scroll when trailer is open
+  useEffect(() => {
+    document.body.style.overflow = trailerOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [trailerOpen]);
+
   const movie = movies[current];
 
   const hasVotes = movie.vote_count > 0;
 
-  const scoreColor =
-    movie.vote_average >= 6.5
-      ? "bg-green-600"
-      : movie.vote_average >= 5.0
-        ? "bg-yellow-500"
-        : "bg-red-600";
 
   return (
     <div className="relative w-full h-[75vh] min-h-[480px] overflow-hidden">
@@ -108,6 +121,17 @@ export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
             {movie.overview}
           </p>
 
+          {/* Rating */}
+          {hasVotes ? (
+            <p className="text-white/80 font-roboto-slab text-base">
+              ★ {movie.vote_average.toFixed(1)} / 10
+            </p>
+          ) : (
+            <p className="text-white/80 font-roboto-slab text-base">
+              Coming Soon
+            </p>
+          )}
+
           {/* Actions row */}
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <a
@@ -117,23 +141,12 @@ export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
               View Details
             </a>
             {movie.trailerKey && (
-              <a
-                href={`https://www.youtube.com/watch?v=${movie.trailerKey}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setTrailerOpen(true)}
                 className="px-4 py-2 border border-white/50 text-white bg-transparent hover:bg-white/10 font-roboto-slab text-sm rounded-lg transition-colors"
               >
                 ▶ Watch Trailer
-              </a>
-            )}
-            {hasVotes ? (
-              <span className={`${scoreColor} text-white font-roboto-slab font-bold text-xs px-2 py-1 rounded-full`}>
-                {movie.vote_average.toFixed(1)}
-              </span>
-            ) : (
-              <span className="border border-white/60 text-white/80 font-roboto-slab font-bold text-xs px-2 py-1 rounded-full">
-                Coming Soon
-              </span>
+              </button>
             )}
           </div>
         </div>
@@ -170,6 +183,35 @@ export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
           />
         ))}
       </div>
+
+      {/* Trailer modal */}
+      {trailerOpen && movie.trailerKey && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+          onClick={closeTrailer}
+        >
+          <div
+            className="relative w-full max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeTrailer}
+              className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-roboto-slab"
+            >
+              <FaTimes size={14} /> Close
+            </button>
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-2xl">
+              <iframe
+                src={`https://www.youtube.com/embed/${movie.trailerKey}?autoplay=1&rel=0`}
+                title={`${movie.title} — Trailer`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

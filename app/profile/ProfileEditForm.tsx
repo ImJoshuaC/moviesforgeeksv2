@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { updateProfile, uploadAvatar } from "@/app/actions/profile";
+import AvatarCropModal from "./AvatarCropModal";
 
 type Props = {
   initialDisplayName: string | null;
@@ -24,9 +26,12 @@ export default function ProfileEditForm({
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
   const [avatarPreview, setAvatarPreview] = useState(initialAvatarUrl ?? "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [pendingFileName, setPendingFileName] = useState<string>("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,8 +49,21 @@ export default function ProfileEditForm({
     }
 
     setError("");
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    setPendingFileName(file.name);
+    setCropSrc(URL.createObjectURL(file));
+  };
+
+  const handleCropConfirm = (blob: Blob) => {
+    const croppedFile = new File([blob], pendingFileName || "avatar.jpg", { type: "image/jpeg" });
+    setAvatarFile(croppedFile);
+    setAvatarPreview(URL.createObjectURL(croppedFile));
+    setCropSrc(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleCropCancel = () => {
+    setCropSrc(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSave = () => {
@@ -70,7 +88,10 @@ export default function ProfileEditForm({
         setError(result.error);
       } else {
         setAvatarFile(null);
+        setAvatarPreview(finalAvatarUrl);
         setIsEditing(false);
+        window.dispatchEvent(new CustomEvent('profile:updated', { detail: { avatarUrl: finalAvatarUrl } }));
+        router.refresh();
       }
     });
   };
@@ -164,13 +185,19 @@ export default function ProfileEditForm({
       </div>
 
       {/* Bio */}
-      <textarea
-        placeholder="Bio"
-        value={bio}
-        onChange={(e) => setBio(e.target.value)}
-        rows={4}
-        className="w-full bg-[#2a2a2a] border border-white/20 rounded-md px-4 py-3 text-white placeholder-white/40 outline-none focus:border-white/50 font-roboto-slab resize-none"
-      />
+      <div className="relative">
+        <textarea
+          placeholder="Bio"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          maxLength={160}
+          rows={4}
+          className="w-full bg-[#2a2a2a] border border-white/20 rounded-md px-4 py-3 text-white placeholder-white/40 outline-none focus:border-white/50 font-roboto-slab resize-none"
+        />
+        <span className={`absolute bottom-2.5 right-3 text-xs font-roboto-slab ${bio.length >= 160 ? "text-red-400" : "text-white/30"}`}>
+          {bio.length}/160
+        </span>
+      </div>
 
       {error && (
         <p className="text-red-400 text-sm font-roboto-slab">{error}</p>
@@ -192,6 +219,13 @@ export default function ProfileEditForm({
           Cancel
         </button>
       </div>
+      {cropSrc && (
+        <AvatarCropModal
+          imageSrc={cropSrc}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }

@@ -32,10 +32,10 @@ export default function TrailerModal({ trailerKey, title }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white text-sm font-bold rounded-lg transition-all duration-200"
+        className="flex flex-col items-center justify-center gap-1.5 px-4 py-3 border border-white/20 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-colors min-w-[72px]"
       >
-        <FaPlay size={11} />
-        Watch Trailer
+        <FaPlay size={16} />
+        <span className="text-[10px] font-roboto-slab uppercase tracking-wide">Trailer</span>
       </button>
 
       {open && (

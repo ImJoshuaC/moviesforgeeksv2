@@ -75,16 +75,15 @@ export async function uploadAvatar(formData: FormData) {
     return { error: 'Photo must be under 2 MB.' }
   }
 
-  const ext = file.name.split('.').pop()
-  const path = `${user.id}/avatar.${ext}`
+  const path = `${user.id}/avatar.jpg`
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(path, file, { upsert: true })
+    .upload(path, file, { upsert: true, contentType: 'image/jpeg' })
 
   if (uploadError) return { error: uploadError.message }
 
   const { data } = supabase.storage.from('avatars').getPublicUrl(path)
 
-  return { url: data.publicUrl }
+  return { url: `${data.publicUrl}?v=${Date.now()}` }
 }
