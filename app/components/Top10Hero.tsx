@@ -3,7 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaStar, FaStarHalfAlt, FaRegStar, FaPlay, FaTimes } from "react-icons/fa";
+import {
+  FaStar,
+  FaStarHalfAlt,
+  FaRegStar,
+  FaPlay,
+  FaTimes,
+} from "react-icons/fa";
 
 export type Top10Item = {
   id: string;
@@ -35,7 +41,9 @@ function StarRating({ score }: { score: number }) {
         if (stars >= i)
           return <FaStar key={i} size={13} className="text-yellow-400" />;
         if (stars >= i - 0.5)
-          return <FaStarHalfAlt key={i} size={13} className="text-yellow-400" />;
+          return (
+            <FaStarHalfAlt key={i} size={13} className="text-yellow-400" />
+          );
         return <FaRegStar key={i} size={13} className="text-white/25" />;
       })}
     </div>
@@ -68,18 +76,24 @@ export default function Top10Hero({ items }: Props) {
 
   useEffect(() => {
     if (!trailerOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeTrailer(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeTrailer();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [trailerOpen, closeTrailer]);
 
   useEffect(() => {
     document.body.style.overflow = trailerOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [trailerOpen]);
 
   // Close trailer when switching active item
-  useEffect(() => { setTrailerOpen(false); }, [active]);
+  useEffect(() => {
+    setTrailerOpen(false);
+  }, [active]);
 
   return (
     <div>
@@ -119,10 +133,14 @@ export default function Top10Hero({ items }: Props) {
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <StarRating score={current.vote_average} />
-                  <span className={`font-roboto-slab font-bold text-sm ${ratingColor(current.vote_average)}`}>
+                  <span
+                    className={`font-roboto-slab font-bold text-sm ${ratingColor(current.vote_average)}`}
+                  >
                     {current.vote_average.toFixed(1)}
                   </span>
-                  <span className="text-white/40 text-xs font-roboto-serif">/10</span>
+                  <span className="text-white/40 text-xs font-roboto-serif">
+                    /10
+                  </span>
                 </div>
               </div>
             )}
@@ -154,52 +172,52 @@ export default function Top10Hero({ items }: Props) {
 
       {/* Numbered poster row */}
       <div className="relative z-10 -mt-24">
-      <div
-        className="flex overflow-x-auto scrollbar-hide px-4 md:px-10 pt-6 pb-6"
-        onMouseEnter={stopAutoPlay}
-        onMouseLeave={startAutoPlay}
-      >
-        {items.map((item, i) => (
-          <Link
-            key={item.id}
-            href={item.href}
-            onMouseEnter={() => setActive(i)}
-            className="flex items-end shrink-0 group cursor-pointer"
-          >
-            {/* Rank number */}
-            <span
-              className={`font-jaro select-none leading-none transition-all duration-200 text-[90px] md:text-[120px] -mr-4 z-10 relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] ${
-                i === active
-                  ? "text-white/90 [text-shadow:0_0_20px_rgba(0,0,0,0.8),-1px_-1px_0_rgba(0,0,0,0.6),1px_-1px_0_rgba(0,0,0,0.6),-1px_1px_0_rgba(0,0,0,0.6),1px_1px_0_rgba(0,0,0,0.6)]"
-                  : "text-white/40 group-hover:text-white/65 [text-shadow:0_0_10px_rgba(0,0,0,0.8),-1px_-1px_0_rgba(0,0,0,0.5),1px_-1px_0_rgba(0,0,0,0.5),-1px_1px_0_rgba(0,0,0,0.5),1px_1px_0_rgba(0,0,0,0.5)]"
-              }`}
+        <div
+          className="flex overflow-x-auto scrollbar-hide px-4 md:px-10 pt-6 pb-6"
+          onMouseEnter={stopAutoPlay}
+          onMouseLeave={startAutoPlay}
+        >
+          {items.map((item, i) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              onMouseEnter={() => setActive(i)}
+              className="flex items-end shrink-0 group cursor-pointer"
             >
-              {i + 1}
-            </span>
-            {/* Poster */}
-            <div
-              className={`relative w-[90px] md:w-[110px] shrink-0 rounded-md overflow-hidden border-2 transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-2 origin-bottom ${
-                i === active
-                  ? "border-[#4ade80]"
-                  : "border-transparent group-hover:border-white/30"
-              }`}
-            >
-              <Image
-                src={
-                  item.poster_path
-                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/poster-placeholder.svg"
-                }
-                alt={item.title}
-                width={342}
-                height={513}
-                quality={90}
-                className="w-full h-auto"
-              />
-            </div>
-          </Link>
-        ))}
-      </div>
+              {/* Rank number */}
+              <span
+                className={`font-jaro select-none leading-none transition-all duration-200 text-[90px] md:text-[120px] -mr-4 z-10 relative drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] ${
+                  i === active
+                    ? "text-white/90 [text-shadow:0_0_20px_rgba(0,0,0,0.8),-1px_-1px_0_rgba(0,0,0,0.6),1px_-1px_0_rgba(0,0,0,0.6),-1px_1px_0_rgba(0,0,0,0.6),1px_1px_0_rgba(0,0,0,0.6)]"
+                    : "text-white/40 group-hover:text-white/65 [text-shadow:0_0_10px_rgba(0,0,0,0.8),-1px_-1px_0_rgba(0,0,0,0.5),1px_-1px_0_rgba(0,0,0,0.5),-1px_1px_0_rgba(0,0,0,0.5),1px_1px_0_rgba(0,0,0,0.5)]"
+                }`}
+              >
+                {i + 1}
+              </span>
+              {/* Poster */}
+              <div
+                className={`relative w-[90px] md:w-[110px] shrink-0 rounded-md overflow-hidden border-2 transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-2 origin-bottom ${
+                  i === active
+                    ? "border-[#4ade80]"
+                    : "border-transparent group-hover:border-white/30"
+                }`}
+              >
+                <Image
+                  src={
+                    item.poster_path
+                      ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+                      : "/poster-placeholder.svg"
+                  }
+                  alt={item.title}
+                  width={342}
+                  height={513}
+                  quality={90}
+                  className="w-full h-auto"
+                />
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Trailer modal */}
@@ -208,7 +226,10 @@ export default function Top10Hero({ items }: Props) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
           onClick={closeTrailer}
         >
-          <div className="relative w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="relative w-full max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={closeTrailer}
               className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors flex items-center gap-1.5 text-sm font-roboto-slab"

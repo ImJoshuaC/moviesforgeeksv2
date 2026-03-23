@@ -5,6 +5,7 @@ import { getProfile } from "@/app/actions/profile";
 import { getWatchlist } from "@/app/actions/watchlist";
 import { getFavorites } from "@/app/actions/favorites";
 import { getTopFilms } from "@/app/actions/topFilms";
+import { prisma } from "@/lib/prisma";
 import ProfileEditForm from "./ProfileEditForm";
 import ProfileContent from "./ProfileContent";
 
@@ -14,12 +15,13 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/auth/login");
 
-  const [result, watchlist, favorites, topFilms, topShows] = await Promise.all([
+  const [result, watchlist, favorites, topFilms, topShows, reviewCount] = await Promise.all([
     getProfile(),
     getWatchlist(),
     getFavorites(),
     getTopFilms("movie"),
     getTopFilms("show"),
+    prisma.review.count({ where: { user_id: user.id } }),
   ]);
 
   const profile = result?.profile ?? null;
@@ -33,10 +35,16 @@ export default async function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#161616]">
-    <div className="px-5 md:px-10 lg:px-16 py-10 max-w-5xl mx-auto">
+
+      {/* ── COVER BANNER ── */}
+      <div className="h-44 bg-linear-to-br from-[#4ade80]/15 via-[#232323] to-[#161616] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_100%,rgba(74,222,128,0.12)_0%,transparent_60%)]" />
+      </div>
+
+    <div className="px-5 md:px-10 lg:px-16 pb-10 max-w-5xl mx-auto -mt-12 relative">
 
       {/* ── PROFILE HEADER ── */}
-      <div className="flex gap-8 mb-10 items-start">
+      <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 mb-10 items-center sm:items-start">
 
         {/* Left: avatar + edit button */}
         <div className="flex flex-col items-center gap-4 shrink-0">
@@ -64,7 +72,7 @@ export default async function ProfilePage() {
         </div>
 
         {/* Right: name, username, bio, stats */}
-        <div className="flex flex-col min-w-0 pt-1 flex-1">
+        <div className="flex flex-col min-w-0 pt-1 flex-1 items-center sm:items-start text-center sm:text-left">
           <h1 className="text-white text-3xl md:text-4xl font-roboto-slab font-bold uppercase leading-tight">
             {displayName}
           </h1>
@@ -82,18 +90,18 @@ export default async function ProfilePage() {
           </p>
 
           {/* Stats bar */}
-          <div className="flex mt-6 border border-white/20 rounded-lg divide-x divide-white/20 overflow-hidden">
-            <div className="flex flex-col items-center justify-center py-3 flex-1">
+          <div className="flex mt-6 w-full border border-white/20 rounded-lg divide-x divide-white/20 overflow-hidden">
+            <div className="flex flex-col items-center justify-center py-3 px-4 flex-1">
               <span className="text-white font-roboto-slab font-bold text-xl">{watchlist.length}</span>
-              <span className="text-white/50 font-roboto-serif text-xs uppercase tracking-wide mt-0.5">Watchlisted</span>
+              <span className="text-white/50 font-roboto-serif text-xs uppercase tracking-normal mt-0.5">Watchlisted</span>
             </div>
-            <div className="flex flex-col items-center justify-center py-3 flex-1">
-              <span className="text-white font-roboto-slab font-bold text-xl">0</span>
-              <span className="text-white/50 font-roboto-serif text-xs uppercase tracking-wide mt-0.5">Lists</span>
+            <div className="flex flex-col items-center justify-center py-3 px-4 flex-1">
+              <span className="text-white font-roboto-slab font-bold text-xl">{favorites.length}</span>
+              <span className="text-white/50 font-roboto-serif text-xs uppercase tracking-normal mt-0.5">Favorites</span>
             </div>
-            <div className="flex flex-col items-center justify-center py-3 flex-1">
-              <span className="text-white font-roboto-slab font-bold text-xl">0</span>
-              <span className="text-white/50 font-roboto-serif text-xs uppercase tracking-wide mt-0.5">Followers</span>
+            <div className="flex flex-col items-center justify-center py-3 px-4 flex-1">
+              <span className="text-white font-roboto-slab font-bold text-xl">{reviewCount}</span>
+              <span className="text-white/50 font-roboto-serif text-xs uppercase tracking-normal mt-0.5">Reviews</span>
             </div>
           </div>
         </div>

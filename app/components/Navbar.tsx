@@ -243,12 +243,10 @@ export const Navbar = () => {
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        searchWrapperRef.current &&
-        !searchWrapperRef.current.contains(e.target as Node) &&
-        mobileSearchWrapperRef.current &&
-        !mobileSearchWrapperRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+      const insideDesktop = searchWrapperRef.current?.contains(target);
+      const insideMobile = mobileSearchWrapperRef.current?.contains(target);
+      if (!insideDesktop && !insideMobile) {
         setShowSuggestions(false);
       }
     };
@@ -304,7 +302,7 @@ export const Navbar = () => {
         <Hamburger toggled={isOpen} toggle={setOpen} size={20} />
         {isOpen && (
           <div className="flex flex-col items-center w-full" style={{ animation: "mobile-drawer-in 200ms ease-out both" }}>
-            <div ref={mobileSearchWrapperRef} className="relative w-48 mt-2 mb-1">
+            <div ref={mobileSearchWrapperRef} className="relative w-64 mt-2 mb-1">
               <div className="flex items-center px-3 rounded-2xl bg-[#D9D9D9]/50">
                 <input
                   type="text"
@@ -381,7 +379,7 @@ export const Navbar = () => {
           <Link href="/films" className={navLinkClass}>FILMS</Link>
           <Link href="/shows" className={navLinkClass}>TV SHOWS</Link>
           <Link href="/people" className={navLinkClass}>PEOPLE</Link>
-          <div ref={searchWrapperRef} className="relative w-52">
+          <div ref={searchWrapperRef} className="relative w-72">
             <div className="flex items-center px-5 rounded-2xl bg-[#D9D9D9]/50">
               <input
                 type="text"

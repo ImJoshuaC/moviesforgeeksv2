@@ -8,7 +8,8 @@ type Props = {
 };
 
 function pageHref(basePath: string, page: number) {
-  return `${basePath}?page=${page}`;
+  const sep = basePath.includes("?") ? "&" : "?";
+  return `${basePath}${sep}page=${page}`;
 }
 
 function buildPageNumbers(current: number, total: number): (number | "...")[] {

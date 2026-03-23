@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   FaStar,
   FaRegStar,
@@ -12,6 +13,8 @@ import {
   FaThumbsUp,
   FaThumbsDown,
   FaEllipsisV,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import { GiGoat } from "react-icons/gi";
 import {
@@ -35,7 +38,7 @@ type ReviewVote = {
   value: number;
 };
 
-type Review = {
+export type Review = {
   id: string;
   user_id: string;
   rating: number;
@@ -46,6 +49,8 @@ type Review = {
   votes: ReviewVote[];
 };
 
+type SortOrder = "newest" | "oldest" | "most_liked" | "controversial";
+
 type Props = {
   mediaId: number;
   mediaType: "movie" | "show";
@@ -53,6 +58,7 @@ type Props = {
   currentUserId: string | null;
   showAll?: boolean;
   initialCount?: number;
+  hideStats?: boolean;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -190,6 +196,81 @@ function RatingDisplay({ rating }: { rating: number }) {
   );
 }
 
+// ── Rating Stats (exportable for left column use) ─────────────────────────────
+
+export function RatingStats({ reviews }: { reviews: Review[] }) {
+  const ratingLabels = ["Straight Garbage", "1★", "2★", "3★", "4★", "5★", "GOAT"];
+  const distribution = [0, 1, 2, 3, 4, 5, 6].map((r, i) => ({
+    label: ratingLabels[i],
+    count: reviews.filter((rev) => rev.rating === r).length,
+    rating: r,
+  }));
+  const maxCount = Math.max(...distribution.map((d) => d.count), 1);
+
+  const mfgAvg =
+    reviews.length > 0
+      ? Math.round(
+          (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length / 6) *
+            100,
+        ) / 10
+      : null;
+
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col gap-4">
+      <div>
+        <p className="text-white/50 text-[10px] uppercase tracking-widest font-roboto-slab mb-1">
+          MoviesForGeeks Rating
+        </p>
+        {mfgAvg !== null ? (
+          <div className="flex items-baseline gap-1.5">
+            <span className={`text-3xl font-roboto-slab font-black ${mfgAvg >= 6.5 ? "text-green-400" : mfgAvg >= 5.0 ? "text-yellow-400" : "text-red-400"}`}>
+              {mfgAvg.toFixed(1)}
+            </span>
+            <span className="text-white/30 text-sm font-roboto-serif">
+              / 10
+            </span>
+            <span className="text-white/30 text-xs font-roboto-serif ml-1">
+              ({reviews.length} review{reviews.length !== 1 ? "s" : ""})
+            </span>
+          </div>
+        ) : (
+          <span className="text-white/30 text-sm font-roboto-serif">
+            No ratings yet
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {[...distribution].reverse().map(({ label, count, rating: r }) => {
+          const barColor =
+            r === 0
+              ? "bg-red-500"
+              : r === 6
+                ? "bg-[#4ade80]"
+                : "bg-yellow-400";
+          const pct = Math.round((count / maxCount) * 100);
+          return (
+            <div key={r} className="flex items-center gap-2">
+              <span className="text-white/40 text-xs font-roboto-slab w-9 shrink-0 text-right">
+                {label}
+              </span>
+              <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
+                <div
+                  className={`${barColor} h-full rounded-full transition-all duration-500`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="text-white/30 text-xs font-roboto-serif w-5 shrink-0">
+                {count}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Review card ───────────────────────────────────────────────────────────────
 
 function ReviewCard({
@@ -280,7 +361,7 @@ function ReviewCard({
           {/* Name row */}
           <div className="flex items-start justify-between gap-2">
             <div>
-              <span className="text-white font-semibold text-sm leading-tight block">{displayName}</span>
+              <Link href={`/users/${review.user_id}`} className="text-white font-semibold text-sm leading-tight block hover:underline">{displayName}</Link>
               <span className="text-white/35 text-xs">
                 {formatTs(review.created_at)}
                 {edited && <span className="italic"> · edited</span>}
@@ -401,6 +482,14 @@ function ReviewCard({
 // ── Main component ────────────────────────────────────────────────────────────
 
 const INITIAL_COUNT = 3;
+const PAGE_SIZE = 10;
+
+const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "most_liked", label: "Most Liked" },
+  { value: "controversial", label: "Controversial" },
+];
 
 export default function ReviewSection({
   mediaId,
@@ -409,12 +498,21 @@ export default function ReviewSection({
   currentUserId,
   showAll = false,
   initialCount = INITIAL_COUNT,
+  hideStats = false,
 }: Props) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [rating, setRating] = useState<number | null>(null);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  function handleSortChange(order: SortOrder) {
+    setSortOrder(order);
+    setCurrentPage(1);
+  }
+
   function handleSubmit() {
     if (rating === null) return;
     setError(null);
@@ -450,86 +548,37 @@ export default function ReviewSection({
   }
 
   const reviewsPagePath = `/${mediaType === "movie" ? "films" : "shows"}/${mediaId}/reviews`;
-  const sortedByPopularity = [...reviews].sort((a, b) => {
-    const aNet = a.votes?.reduce((s: number, v: { value: number }) => s + v.value, 0) ?? 0;
-    const bNet = b.votes?.reduce((s: number, v: { value: number }) => s + v.value, 0) ?? 0;
-    return bNet - aNet;
+
+  // Sort
+  const sorted = [...reviews].sort((a, b) => {
+    switch (sortOrder) {
+      case "newest":
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case "oldest":
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "most_liked": {
+        const aNet = a.votes.reduce((s, v) => s + v.value, 0);
+        const bNet = b.votes.reduce((s, v) => s + v.value, 0);
+        return bNet - aNet;
+      }
+      case "controversial": {
+        const aNet = a.votes.reduce((s, v) => s + v.value, 0);
+        const bNet = b.votes.reduce((s, v) => s + v.value, 0);
+        return aNet - bNet; // lowest score first
+      }
+    }
   });
-  const visibleReviews = showAll ? sortedByPopularity : sortedByPopularity.slice(0, initialCount);
+
+  const totalPages = Math.ceil(reviews.length / PAGE_SIZE);
+  const visibleReviews = showAll
+    ? sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : sorted.slice(0, initialCount);
   const hasMore = !showAll && reviews.length > initialCount;
-
-  // Ratings distribution
-  const ratingLabels = ["Straight Garbage", "1★", "2★", "3★", "4★", "5★", "GOAT"];
-  const distribution = [0, 1, 2, 3, 4, 5, 6].map((r, i) => ({
-    label: ratingLabels[i],
-    count: reviews.filter((rev) => rev.rating === r).length,
-    rating: r,
-  }));
-  const maxCount = Math.max(...distribution.map((d) => d.count), 1);
-
-  const mfgAvg =
-    reviews.length > 0
-      ? Math.round(
-          (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length / 6) *
-            100,
-        ) / 10
-      : null;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* MFG ratings distribution — top of right column */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col gap-4">
-        <div>
-          <p className="text-white/50 text-[10px] uppercase tracking-widest font-roboto-slab mb-1">
-            MoviesForGeeks Rating
-          </p>
-          {mfgAvg !== null ? (
-            <div className="flex items-baseline gap-1.5">
-              <span className={`text-3xl font-roboto-slab font-black ${mfgAvg >= 6.5 ? "text-green-400" : mfgAvg >= 5.0 ? "text-yellow-400" : "text-red-400"}`}>
-                {mfgAvg.toFixed(1)}
-              </span>
-              <span className="text-white/30 text-sm font-roboto-serif">
-                / 10
-              </span>
-              <span className="text-white/30 text-xs font-roboto-serif ml-1">
-                ({reviews.length} review{reviews.length !== 1 ? "s" : ""})
-              </span>
-            </div>
-          ) : (
-            <span className="text-white/30 text-sm font-roboto-serif">
-              No ratings yet
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {[...distribution].reverse().map(({ label, count, rating: r }) => {
-            const barColor =
-              r === 0
-                ? "bg-red-500"
-                : r === 6
-                  ? "bg-[#4ade80]"
-                  : "bg-yellow-400";
-            const pct = Math.round((count / maxCount) * 100);
-            return (
-              <div key={r} className="flex items-center gap-2">
-                <span className="text-white/40 text-xs font-roboto-slab w-9 shrink-0 text-right">
-                  {label}
-                </span>
-                <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
-                  <div
-                    className={`${barColor} h-full rounded-full transition-all duration-500`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <span className="text-white/30 text-xs font-roboto-serif w-5 shrink-0">
-                  {count}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* MFG ratings distribution — hidden when hideStats is true */}
+      {!hideStats && <RatingStats reviews={reviews} />}
 
       {/* Reviews section */}
       <div>
@@ -542,6 +591,8 @@ export default function ReviewSection({
           )}
         </div>
         <hr className="border-white/15 my-2" />
+
+        {/* Write review / sign-in prompt */}
         <div>
           {currentUserId ? (
             <div className="flex flex-col gap-3 mb-8">
@@ -581,6 +632,26 @@ export default function ReviewSection({
             </div>
           )}
 
+          {/* Sort filter controls — only on full page */}
+          {showAll && reviews.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap mb-5">
+              <span className="text-white/40 text-xs font-roboto-slab uppercase tracking-widest mr-1">Sort:</span>
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSortChange(opt.value)}
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-roboto-slab uppercase tracking-wide transition-colors ${
+                    sortOrder === opt.value
+                      ? "bg-[#4ade80]/15 text-[#4ade80] border-[#4ade80]/30"
+                      : "bg-white/5 text-white/50 border-white/10 hover:text-white/80 hover:border-white/20"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {reviews.length === 0 ? (
             <div className="py-8 flex flex-col items-center gap-2 text-center border border-dashed border-white/10 rounded-xl">
               <p className="text-white/50 text-base font-roboto-slab uppercase tracking-wide">No reviews yet</p>
@@ -609,6 +680,29 @@ export default function ReviewSection({
                   See All Reviews
                 </a>
               )}
+            </div>
+          )}
+
+          {/* Pagination — only on full page with multiple pages */}
+          {showAll && totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-6 pt-6 border-t border-white/10">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-white/15 text-white/50 hover:text-white hover:border-white/30 text-sm font-roboto-slab transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <FaChevronLeft size={11} /> Prev
+              </button>
+              <span className="text-white/40 text-sm font-roboto-serif tabular-nums">
+                Page <span className="text-white font-semibold">{currentPage}</span> of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-white/15 text-white/50 hover:text-white hover:border-white/30 text-sm font-roboto-slab transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Next <FaChevronRight size={11} />
+              </button>
             </div>
           )}
         </div>

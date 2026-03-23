@@ -1,7 +1,7 @@
 "use client";
 
 import { Shows } from "@/app/types/shows";
-import ShowsCard from "./ShowsCard";
+import MediaCard from "./MediaCard";
 import Carousel from "./Carousel";
 
 type ShowsCarouselProps = {
@@ -12,7 +12,7 @@ export default function ShowsCarousel({ results }: ShowsCarouselProps) {
   return (
     <Carousel
       items={results}
-      renderItem={(show) => <ShowsCard results={show} />}
+      renderItem={(show) => <MediaCard type="show" results={show} />}
       getKey={(show, index) => `${show.id}-${index}`}
     />
   );

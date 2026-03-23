@@ -1,7 +1,7 @@
 "use client";
 
 import { Movie } from "@/app/types/movie";
-import MovieCard from "./MovieCard";
+import MediaCard from "./MediaCard";
 import Carousel from "./Carousel";
 
 type MovieCarouselProps = {
@@ -12,7 +12,7 @@ export default function MovieCarousel({ results }: MovieCarouselProps) {
   return (
     <Carousel
       items={results}
-      renderItem={(movie) => <MovieCard results={movie} />}
+      renderItem={(movie) => <MediaCard type="movie" results={movie} />}
       getKey={(movie, index) => `${movie.id}-${index}`}
     />
   );

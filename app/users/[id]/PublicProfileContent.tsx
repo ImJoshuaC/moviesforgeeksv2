@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import TopFilmsSection from "./TopFilmsSection";
 
 type MediaItem = {
   id: string;
@@ -32,7 +31,7 @@ type Props = {
   watchlistShows: MediaItem[];
 };
 
-export default function ProfileContent({
+export default function PublicProfileContent({
   topFilms,
   topShows,
   favoriteFilms,
@@ -43,6 +42,7 @@ export default function ProfileContent({
   const [tab, setTab] = useState<"films" | "shows">("films");
 
   const isFilms = tab === "films";
+  const topItems = isFilms ? topFilms : topShows;
   const favorites = isFilms ? favoriteFilms : favoriteShows;
   const watchlist = isFilms ? watchlistFilms : watchlistShows;
   const browseHref = isFilms ? "/films" : "/shows";
@@ -50,7 +50,7 @@ export default function ProfileContent({
 
   return (
     <>
-      {/* ── GLOBAL TAB SWITCHER ── */}
+      {/* ── TAB SWITCHER ── */}
       <div className="flex gap-6 mb-10 border-b border-white/10 pb-4">
         <button
           onClick={() => setTab("films")}
@@ -75,29 +75,51 @@ export default function ProfileContent({
       </div>
 
       {/* ── TOP 5 ── */}
-      <section className="mb-10">
-        <TopFilmsSection
-          key={tab}
-          mediaType={isFilms ? "movie" : "show"}
-          initialTopItems={isFilms ? topFilms : topShows}
-          favorites={favorites}
-        />
-      </section>
+      {topItems.length > 0 && (
+        <section className="mb-10">
+          <h2 className="font-roboto-slab text-sm uppercase tracking-widest text-white/60 mb-4">
+            Top 5 {label}
+          </h2>
+          <div className="flex gap-3">
+            {topItems.map((item) => (
+              <Link
+                key={item.id}
+                href={`${browseHref}/${item.media_id}`}
+                className="group relative flex-1"
+              >
+                <div className="relative aspect-2/3 rounded-md overflow-hidden">
+                  {item.poster_path ? (
+                    <Image
+                      src={`https://image.tmdb.org/t/p/w185${item.poster_path}`}
+                      alt={item.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                      <span className="text-white/30 text-xs font-roboto-slab text-center px-1">
+                        {item.title}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-1 left-1 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center">
+                    <span className="text-white text-[10px] font-roboto-slab font-bold">
+                      {item.position}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── FAVORITES + WATCHLIST ── */}
       <div className="grid grid-cols-2 gap-6">
-        {/* Favorites */}
         <section>
-          <div className="flex items-baseline justify-between mb-4">
-            <h2 className="font-roboto-slab text-sm uppercase tracking-widest text-white/60">
-              Favorites
-            </h2>
-            {favorites.length > 0 && (
-              <Link href="/favorites" className="font-roboto-serif text-xs uppercase text-white/40 hover:text-white transition-colors">
-                See all
-              </Link>
-            )}
-          </div>
+          <h2 className="font-roboto-slab text-sm uppercase tracking-widest text-white/60 mb-4">
+            Favorites
+          </h2>
           {favorites.length === 0 ? (
             <p className="text-white/30 font-roboto-serif text-sm italic">
               No {label} liked yet.
@@ -107,18 +129,10 @@ export default function ProfileContent({
           )}
         </section>
 
-        {/* Watchlist */}
         <section>
-          <div className="flex items-baseline justify-between mb-4">
-            <h2 className="font-roboto-slab text-sm uppercase tracking-widest text-white/60">
-              Watchlist
-            </h2>
-            {watchlist.length > 0 && (
-              <Link href="/watchlist" className="font-roboto-serif text-xs uppercase text-white/40 hover:text-white transition-colors">
-                See all
-              </Link>
-            )}
-          </div>
+          <h2 className="font-roboto-slab text-sm uppercase tracking-widest text-white/60 mb-4">
+            Watchlist
+          </h2>
           {watchlist.length === 0 ? (
             <p className="text-white/30 font-roboto-serif text-sm italic">
               No {label} watchlisted yet.
