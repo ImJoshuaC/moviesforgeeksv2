@@ -21,6 +21,7 @@ export default async function ShowReviewsPage({
     createClient(),
   ]);
 
+  if (!res.ok) throw new Error(`Show not found (${res.status})`);
   const showData = await res.json();
   const {
     data: { user },

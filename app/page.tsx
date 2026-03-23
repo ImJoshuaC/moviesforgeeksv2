@@ -5,6 +5,8 @@ import HeroCarousel from "@/app/components/HeroCarousel";
 import { Movie } from "@/app/types/movie";
 import { Shows } from "@/app/types/shows";
 
+export const dynamic = "force-dynamic";
+
 const API_KEY = process.env.API_KEY;
 
 export default async function Home() {

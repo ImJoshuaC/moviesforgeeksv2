@@ -19,6 +19,7 @@ export default async function FilmReviewsPage({
     createClient(),
   ]);
 
+  if (!res.ok) throw new Error(`Film not found (${res.status})`);
   const filmData = await res.json();
   const { data: { user } } = await supabase.auth.getUser();
   const reviews = await getReviews(Number(filmId), "movie");

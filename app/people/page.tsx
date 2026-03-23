@@ -1,14 +1,17 @@
 import { Person } from "@/app/types/person";
 import PeopleCarousel from "@/app/components/PeopleCarousel";
 
+export const dynamic = "force-dynamic";
+
 const API_KEY = process.env.API_KEY;
 
 async function fetchPeople(endpoint: string): Promise<Person[]> {
   const res = await fetch(
     `https://api.themoviedb.org/3/${endpoint}?api_key=${API_KEY}&language=en-US&page=1`
   );
+  if (!res.ok) throw new Error(`Failed to load people (${res.status})`);
   const data = await res.json();
-  return data.results;
+  return data.results ?? [];
 }
 
 export default async function PeoplePage() {
