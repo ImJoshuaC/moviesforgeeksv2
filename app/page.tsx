@@ -14,6 +14,10 @@ export default async function Home() {
     fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${API_KEY}&language=en-US&page=1`),
   ]);
 
+  if (!trendingRes.ok || !upcomingRes.ok || !tvRes.ok) {
+    throw new Error("Failed to load content. Please try again later.");
+  }
+
   const [trendingData, upcomingData, tvData] = await Promise.all([
     trendingRes.json(),
     upcomingRes.json(),

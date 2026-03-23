@@ -34,6 +34,8 @@ export default async function SpecificFilmPage({
     fetch(`https://api.themoviedb.org/3/movie/${filmId}/watch/providers?api_key=${API_KEY}`),
   ]);
 
+  if (!res.ok) throw new Error(`Film not found (${res.status})`);
+
   const filmData = await res.json();
   const creditsData = await creditsRes.json();
   const videosData = await videosRes.json();

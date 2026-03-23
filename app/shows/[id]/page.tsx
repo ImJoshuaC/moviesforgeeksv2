@@ -34,6 +34,8 @@ export default async function SpecificShowsPage({
     fetch(`https://api.themoviedb.org/3/tv/${showId}/watch/providers?api_key=${API_KEY}`),
   ]);
 
+  if (!res.ok) throw new Error(`Show not found (${res.status})`);
+
   const showData = await res.json();
   const creditsData = await creditsRes.json();
   const videosData = await videosRes.json();

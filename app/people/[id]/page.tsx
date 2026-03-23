@@ -19,6 +19,8 @@ export default async function PersonDetailPage({
     fetch(`https://api.themoviedb.org/3/person/${personId}/combined_credits?api_key=${API_KEY}&language=en-US`),
   ]);
 
+  if (!personRes.ok) throw new Error(`Person not found (${personRes.status})`);
+
   const person = await personRes.json();
   const credits = await creditsRes.json();
 
