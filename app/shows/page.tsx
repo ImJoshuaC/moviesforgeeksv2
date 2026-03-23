@@ -3,14 +3,17 @@ import { Shows } from "@/app/types/shows";
 import ShowsCarousel from "@/app/components/ShowsCarousel";
 import Top10Hero, { Top10Item } from "@/app/components/Top10Hero";
 
+export const dynamic = "force-dynamic";
+
 const API_KEY = process.env.API_KEY;
 
 async function fetchShows(category: string): Promise<Shows[]> {
   const res = await fetch(
     `https://api.themoviedb.org/3/tv/${category}?api_key=${API_KEY}&language=en-US&page=1`
   );
+  if (!res.ok) throw new Error(`Failed to load shows (${res.status})`);
   const data = await res.json();
-  return data.results;
+  return data.results ?? [];
 }
 
 export default async function ShowsPage() {

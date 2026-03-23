@@ -3,14 +3,17 @@ import { Movie } from "@/app/types/movie";
 import MovieCarousel from "@/app/components/MovieCarousel";
 import Top10Hero, { Top10Item } from "@/app/components/Top10Hero";
 
+export const dynamic = "force-dynamic";
+
 const API_KEY = process.env.API_KEY;
 
 async function fetchMovies(category: string): Promise<Movie[]> {
   const res = await fetch(
     `https://api.themoviedb.org/3/movie/${category}?api_key=${API_KEY}&language=en-US&page=1`
   );
+  if (!res.ok) throw new Error(`Failed to load movies (${res.status})`);
   const data = await res.json();
-  return data.results;
+  return data.results ?? [];
 }
 
 export default async function FilmsPage() {
