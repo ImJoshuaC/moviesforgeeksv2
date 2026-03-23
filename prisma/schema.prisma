@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id           String      @id
+  username     String?     @unique
+  display_name String?
+  bio          String?
+  avatar_url   String?
+  updated_at   DateTime    @updatedAt
+
+  watchlist     Watchlist[]
+  favorites     Favorite[]
+  reviews       Review[]
+  review_votes  ReviewVote[]
+  top_films     TopFilm[]
+
+  @@map("profiles")
+}
+
+model Watchlist {
+  id           String   @id @default(uuid())
+  user_id      String
+  media_id     Int
+  media_type   String
+  title        String
+  poster_path  String?
+  release_year Int?
+  created_at   DateTime @default(now())
+
+  profile      Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("watchlist")
+}
+
+model Favorite {
+  id           String   @id @default(uuid())
+  user_id      String
+  media_id     Int
+  media_type   String
+  title        String
+  poster_path  String?
+  release_year Int?
+  created_at   DateTime @default(now())
+
+  profile      Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("favorites")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  user_id    String
+  media_id   Int
+  media_type String
+  rating     Int
+  body       String?
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  profile    Profile      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  votes      ReviewVote[]
+
+  @@map("reviews")
+}
+
+model ReviewVote {
+  id        String  @id @default(uuid())
+  review_id String  @db.Uuid
+  user_id   String
+  value     Int     // 1 = upvote, -1 = downvote
+
+  review    Review  @relation(fields: [review_id], references: [id], onDelete: Cascade)
+  profile   Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([review_id, user_id])
+  @@map("review_votes")
+}
+
+model TopFilm {
+  id          String   @id @default(uuid())
+  user_id     String
+  media_id    Int
+  media_type  String
+  title       String
+  poster_path String?
+  position    Int
+
+  profile     Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, media_type, position])
+  @@map("top_films")
+}
