@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "./components/Navbar";
 import Footer from "./components/Footer";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "MoviesForGeeks",
@@ -18,9 +19,11 @@ export default function RootLayout({
       <body
         className="antialiased flex flex-col min-h-screen"
       >
+        <TooltipProvider>
         <Navbar />
         {children}
         <Footer />
+        </TooltipProvider>
       </body>
     </html>
   );
