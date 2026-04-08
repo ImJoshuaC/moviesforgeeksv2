@@ -54,7 +54,7 @@ export default async function FilmCategoryPage({
 
   const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
 
-  const data = await fetch(config.fetchUrl(currentPage)).then((r) => r.json());
+  const data = await fetch(config.fetchUrl(currentPage), { next: { revalidate: 3600 } }).then((r) => r.json());
   const movies: Movie[] = data.results ?? [];
   const totalPages = Math.min(data.total_pages ?? 1, MAX_PAGES);
 

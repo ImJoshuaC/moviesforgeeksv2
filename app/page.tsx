@@ -5,7 +5,7 @@ import HeroCarousel from "@/app/components/HeroCarousel";
 import { Movie } from "@/app/types/movie";
 import { Shows } from "@/app/types/shows";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // revalidate at most every hour
 
 const API_KEY = process.env.API_KEY;
 

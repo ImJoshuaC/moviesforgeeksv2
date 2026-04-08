@@ -14,9 +14,10 @@ export default async function PersonDetailPage({
 }) {
   const personId = (await params).id;
 
+  const CACHE = { next: { revalidate: 86400 } }; // 24 hours
   const [personRes, creditsRes] = await Promise.all([
-    fetch(`https://api.themoviedb.org/3/person/${personId}?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/person/${personId}/combined_credits?api_key=${API_KEY}&language=en-US`),
+    fetch(`https://api.themoviedb.org/3/person/${personId}?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/person/${personId}/combined_credits?api_key=${API_KEY}&language=en-US`, CACHE),
   ]);
 
   if (!personRes.ok) throw new Error(`Person not found (${personRes.status})`);

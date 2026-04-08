@@ -26,12 +26,13 @@ export default async function SpecificShowsPage({
 }) {
   const showId = (await params).id;
 
+  const CACHE = { next: { revalidate: 86400 } }; // 24 hours
   const [res, creditsRes, videosRes, recommendedRes, providersRes] = await Promise.all([
-    fetch(`https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/tv/${showId}/aggregate_credits?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/tv/${showId}/videos?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/tv/${showId}/recommendations?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/tv/${showId}/watch/providers?api_key=${API_KEY}`),
+    fetch(`https://api.themoviedb.org/3/tv/${showId}?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/tv/${showId}/aggregate_credits?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/tv/${showId}/videos?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/tv/${showId}/recommendations?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/tv/${showId}/watch/providers?api_key=${API_KEY}`, CACHE),
   ]);
 
   if (!res.ok) throw new Error(`Show not found (${res.status})`);
@@ -89,6 +90,11 @@ export default async function SpecificShowsPage({
   const watchProviders: WatchProvider[] = providersData.results?.US?.flatrate ?? [];
   const watchProvidersLink: string | null = providersData.results?.US?.link ?? null;
 
+  // Season count (exclude Specials, season_number === 0)
+  const seasonCount = (showData.seasons ?? []).filter(
+    (s: { season_number: number }) => s.season_number > 0
+  ).length;
+
   // MovieForGeeks rating
   let mfgRating: number | null = null;
   if (reviews.length > 0) {
@@ -131,7 +137,7 @@ export default async function SpecificShowsPage({
                     alt={showData.name ?? "Show Poster"}
                     width={400}
                     height={600}
-                    quality={95}
+                    quality={75}
                     className="w-full h-auto rounded-xl shadow-2xl"
                   />
                 </div>
@@ -146,8 +152,11 @@ export default async function SpecificShowsPage({
                   {/* Metadata */}
                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-white/75 text-sm font-roboto-serif">
                     {showData.first_air_date && <span>{showData.first_air_date.slice(0, 4)}</span>}
-                    {showData.number_of_seasons && (
-                      <><span>·</span><span>{showData.number_of_seasons} Season{showData.number_of_seasons !== 1 ? "s" : ""}</span></>
+                    {seasonCount > 1 && (
+                      <><span>·</span><span>{seasonCount} Seasons</span></>
+                    )}
+                    {showData.number_of_episodes > 0 && (
+                      <><span>·</span><span>{showData.number_of_episodes} Episode{showData.number_of_episodes !== 1 ? "s" : ""}</span></>
                     )}
                     {crewByRole["Director"]?.length > 0 && (
                       <><span>·</span><span>{crewByRole["Director"][0]}</span></>
@@ -238,7 +247,7 @@ export default async function SpecificShowsPage({
                   )}
 
                   {/* End year */}
-                  {showData.last_air_date && (
+                  {(showData.status === "Ended" || showData.status === "Canceled") && showData.last_air_date && (
                     <span className="text-white/40 text-xs font-roboto-serif">
                       Ended {showData.last_air_date.slice(0, 4)}
                     </span>
@@ -276,11 +285,13 @@ export default async function SpecificShowsPage({
                         rel="noopener noreferrer"
                         className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
                       >
-                        <img
+                        <Image
                           src={`https://image.tmdb.org/t/p/w185${p.logo_path}`}
                           alt={p.provider_name}
                           title={p.provider_name}
-                          className="w-20 h-20 rounded-2xl object-cover shadow-md"
+                          width={80}
+                          height={80}
+                          className="rounded-2xl object-cover shadow-md"
                         />
                         <span className="text-white/50 text-xs font-roboto-slab text-center max-w-[80px] leading-tight">
                           {p.provider_name}

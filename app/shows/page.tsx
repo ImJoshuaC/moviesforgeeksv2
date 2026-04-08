@@ -3,7 +3,7 @@ import { Shows } from "@/app/types/shows";
 import ShowsCarousel from "@/app/components/ShowsCarousel";
 import Top10Hero, { Top10Item } from "@/app/components/Top10Hero";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // revalidate at most every hour
 
 const API_KEY = process.env.API_KEY;
 

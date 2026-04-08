@@ -1,7 +1,7 @@
 import { Person } from "@/app/types/person";
 import PeopleCarousel from "@/app/components/PeopleCarousel";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // revalidate at most every hour
 
 const API_KEY = process.env.API_KEY;
 
