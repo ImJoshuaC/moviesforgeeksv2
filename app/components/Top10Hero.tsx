@@ -95,6 +95,15 @@ export default function Top10Hero({ items }: Props) {
     setTrailerOpen(false);
   }, [active]);
 
+  // Pause auto-play while trailer is open; resume when it closes
+  useEffect(() => {
+    if (trailerOpen) {
+      stopAutoPlay();
+    } else {
+      startAutoPlay();
+    }
+  }, [trailerOpen, stopAutoPlay, startAutoPlay]);
+
   return (
     <div>
       {/* Hero backdrop */}

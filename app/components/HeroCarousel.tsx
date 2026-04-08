@@ -40,11 +40,12 @@ export default function HeroCarousel({ movies }: { movies: HeroMovie[] }) {
     [transitioning, movies.length, closeTrailer]
   );
 
-  // Auto-advance every 6 seconds
+  // Auto-advance every 6 seconds; paused while trailer is open
   useEffect(() => {
+    if (trailerOpen) return;
     const timer = setInterval(() => goTo(current + 1), 6000);
     return () => clearInterval(timer);
-  }, [current, goTo]);
+  }, [current, goTo, trailerOpen]);
 
   // Escape key closes trailer
   useEffect(() => {

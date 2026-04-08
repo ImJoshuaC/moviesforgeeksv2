@@ -26,12 +26,13 @@ export default async function SpecificFilmPage({
 }) {
   const filmId = (await params).id;
 
+  const CACHE = { next: { revalidate: 86400 } }; // 24 hours
   const [res, creditsRes, videosRes, recommendedRes, providersRes] = await Promise.all([
-    fetch(`https://api.themoviedb.org/3/movie/${filmId}?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/movie/${filmId}/credits?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/movie/${filmId}/videos?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/movie/${filmId}/recommendations?api_key=${API_KEY}&language=en-US`),
-    fetch(`https://api.themoviedb.org/3/movie/${filmId}/watch/providers?api_key=${API_KEY}`),
+    fetch(`https://api.themoviedb.org/3/movie/${filmId}?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/movie/${filmId}/credits?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/movie/${filmId}/videos?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/movie/${filmId}/recommendations?api_key=${API_KEY}&language=en-US`, CACHE),
+    fetch(`https://api.themoviedb.org/3/movie/${filmId}/watch/providers?api_key=${API_KEY}`, CACHE),
   ]);
 
   if (!res.ok) throw new Error(`Film not found (${res.status})`);
@@ -136,7 +137,7 @@ export default async function SpecificFilmPage({
                     alt={filmData.title ?? "Film Poster"}
                     width={400}
                     height={600}
-                    quality={95}
+                    quality={75}
                     className="w-full h-auto rounded-xl shadow-2xl"
                   />
                 </div>
@@ -265,11 +266,13 @@ export default async function SpecificFilmPage({
                         rel="noopener noreferrer"
                         className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
                       >
-                        <img
+                        <Image
                           src={`https://image.tmdb.org/t/p/w185${p.logo_path}`}
                           alt={p.provider_name}
                           title={p.provider_name}
-                          className="w-20 h-20 rounded-2xl object-cover shadow-md"
+                          width={80}
+                          height={80}
+                          className="rounded-2xl object-cover shadow-md"
                         />
                         <span className="text-white/50 text-xs font-roboto-slab text-center max-w-[80px] leading-tight">
                           {p.provider_name}

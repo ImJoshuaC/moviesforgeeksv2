@@ -34,7 +34,8 @@ export default async function ShowCategoryPage({
   const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
 
   const data = await fetch(
-    `https://api.themoviedb.org/3/tv/${config.endpoint}?api_key=${API_KEY}&language=en-US&page=${currentPage}`
+    `https://api.themoviedb.org/3/tv/${config.endpoint}?api_key=${API_KEY}&language=en-US&page=${currentPage}`,
+    { next: { revalidate: 3600 } }
   ).then((r) => r.json());
 
   const shows: Shows[] = data.results ?? [];
