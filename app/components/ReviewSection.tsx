@@ -16,6 +16,18 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { GiGoat } from "react-icons/gi";
 import {
   submitReview,
@@ -581,7 +593,7 @@ export default function ReviewSection({
       {!hideStats && <RatingStats reviews={reviews} />}
 
       {/* Reviews section */}
-      <div>
+      <div className="bg-white/5 border border-white/10 rounded-xl p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-white font-roboto-slab text-xl md:text-2xl uppercase tracking-wide">Reviews</h2>
           {hasMore && (
@@ -609,13 +621,24 @@ export default function ReviewSection({
               />
               {error && <p className="text-red-400 text-xs">{error}</p>}
               <div>
-                <button
-                  onClick={handleSubmit}
-                  disabled={isPending || rating === null}
-                  className="px-5 py-2 bg-[#4ade80] hover:bg-[#22c55e] text-black text-sm font-bold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {isPending ? "Submitting…" : "Submit Review"}
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-block">
+                      <button
+                        onClick={handleSubmit}
+                        disabled={isPending || rating === null}
+                        className="px-5 py-2 bg-[#4ade80] hover:bg-[#22c55e] text-black text-sm font-bold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {isPending ? "Submitting…" : "Submit Review"}
+                      </button>
+                    </span>
+                  </TooltipTrigger>
+                  {rating === null && (
+                    <TooltipContent side="right" className="bg-[#2a2a2a] border-white/15 text-white/80 text-xs font-roboto-serif">
+                      A rating is required to submit
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </div>
             </div>
           ) : (
@@ -634,21 +657,24 @@ export default function ReviewSection({
 
           {/* Sort filter controls — only on full page */}
           {showAll && reviews.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap mb-5">
-              <span className="text-white/40 text-xs font-roboto-slab uppercase tracking-widest mr-1">Sort:</span>
-              {SORT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => handleSortChange(opt.value)}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-roboto-slab uppercase tracking-wide transition-colors ${
-                    sortOrder === opt.value
-                      ? "bg-[#4ade80]/15 text-[#4ade80] border-[#4ade80]/30"
-                      : "bg-white/5 text-white/50 border-white/10 hover:text-white/80 hover:border-white/20"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 mb-5">
+              <span className="text-white/40 text-xs font-roboto-slab uppercase tracking-widest shrink-0">Sort:</span>
+              <Select value={sortOrder} onValueChange={(v) => handleSortChange(v as SortOrder)}>
+                <SelectTrigger className="w-44 bg-white/5 border-white/15 text-white/70 text-xs font-roboto-slab uppercase tracking-wide focus:ring-0 focus:border-white/30 hover:border-white/25 transition-colors">
+                  <SelectValue>{SORT_OPTIONS.find((o) => o.value === sortOrder)?.label}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-[#2a2a2a] border-white/15 text-white">
+                  {SORT_OPTIONS.map((opt) => (
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      className="text-xs font-roboto-slab uppercase tracking-wide text-white/70 focus:bg-white/10 focus:text-white cursor-pointer"
+                    >
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
