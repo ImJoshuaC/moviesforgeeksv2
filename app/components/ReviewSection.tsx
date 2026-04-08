@@ -622,20 +622,18 @@ export default function ReviewSection({
               {error && <p className="text-red-400 text-xs">{error}</p>}
               <div>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-block">
-                      <button
-                        onClick={handleSubmit}
-                        disabled={isPending || rating === null}
-                        className="px-5 py-2 bg-[#4ade80] hover:bg-[#22c55e] text-black text-sm font-bold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {isPending ? "Submitting…" : "Submit Review"}
-                      </button>
-                    </span>
+                  <TooltipTrigger render={<span className="inline-block" />}>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={isPending || rating === null}
+                      className="px-5 py-2 bg-[#4ade80] hover:bg-[#22c55e] text-black text-sm font-bold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {isPending ? "Submitting…" : "Submit Review"}
+                    </button>
                   </TooltipTrigger>
                   {rating === null && (
-                    <TooltipContent side="right" className="bg-[#2a2a2a] border-white/15 text-white/80 text-xs font-roboto-serif">
-                      A rating is required to submit
+                    <TooltipContent side="top" className="bg-[#1a1a1a] border border-white/25 text-white text-sm font-roboto-serif px-4 py-2 shadow-lg">
+                      A star rating is required before submitting
                     </TooltipContent>
                   )}
                 </Tooltip>
